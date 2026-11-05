@@ -1,4 +1,4 @@
-export const PersonalInfo = {
+export const initialPersonalInfo = {
   profilePhotoUri: '',
   fullName: '',
   documentId: '',
@@ -7,8 +7,8 @@ export const PersonalInfo = {
   gender: '',
   email: '',
 };
- 
-export const VehicleInfo = {
+
+export const initialVehicleInfo = {
   category: '',
   licensePlate: '',
   brand: '',
@@ -18,5 +18,19 @@ export const VehicleInfo = {
   passengerCapacity: '',
   vehiclePhotoUri: '',
 };
- 
-export const DocumentsInfo = {};
+
+export const initialDocumentsInfo = {
+  driverLicenseNumber: '',
+  driverLicensePhotoUri: '',
+  driverLicenseExpiryDate: '', // YYYY-MM-DD
+  soatPhotoUri: '',
+  soatExpiryDate: '', // YYYY-MM-DD
+  mechanicalInspectionPhotoUri: '',
+  mechanicalInspectionExpiryDate: '', // YYYY-MM-DD
+  mercadoPagoEmail: '',
+  termsAccepted: false,
+};
+
+export const PERSONAL_INFO_FIELDS = Object.keys(initialPersonalInfo);
+export const VEHICLE_INFO_FIELDS = Object.keys(initialVehicleInfo);
+export const DOCUMENTS_INFO_FIELDS = Object.keys(initialDocumentsInfo);

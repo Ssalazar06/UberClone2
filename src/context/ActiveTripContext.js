@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 import React, { createContext, useCallback, useEffect, useState } from 'react';
 
@@ -10,6 +11,13 @@ import {
   subscribeToRequestedTrips,
   updateTripStatus as updateTripStatusService,
 } from '../services/tripService.js';
+=======
+import React, { createContext, useCallback, useEffect, useState } from 'react';
+
+import { acceptTrip as acceptTripService, completeTrip as completeTripService, markCashPaid as markCashPaidService,
+  rejectTrip as rejectTripService, subscribeToActiveTrip, subscribeToRequestedTrips,
+  updateTripStatus as updateTripStatusService } from '../services/tripService.js';
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
 import { TRIP_STATUS } from '../constants/tripStatus.js';
 import useDriverRegistration from '../hooks/useDriverRegistration.js';
 import { getData, saveData } from '../services/localStorageService.js';
@@ -25,12 +33,20 @@ export function ActiveTripProvider({ children }) {
   const [isAvailable, setIsAvailable] = useState(false);
 
   const [incomingTrips, setIncomingTrips] = useState([]);
+<<<<<<< HEAD
+=======
+
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
   const [activeTrip, setActiveTrip] = useState(null);
   const [activeTripId, setActiveTripId] = useState(null);
   const [tripActionLoading, setTripActionLoading] = useState(false);
   const [tripError, setTripError] = useState(null);
 
+<<<<<<< HEAD
   // Restore availability from storage when driver is approved
+=======
+  // 1. Restore availability preference when driver is approved
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
   useEffect(() => {
     let isMounted = true;
     (async () => {
@@ -60,7 +76,11 @@ export function ActiveTripProvider({ children }) {
     [isApproved]
   );
 
+<<<<<<< HEAD
   // Real-time requested trips subscription
+=======
+  // 2. Subscription to requested trips when the driver is available and does not have an active trip
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
   useEffect(() => {
     if (!isAvailable || !isApproved || !driverId || activeTripId) {
       setIncomingTrips([]);
@@ -84,7 +104,11 @@ export function ActiveTripProvider({ children }) {
     };
   }, [isAvailable, isApproved, driverId, vehicleInfo?.category, activeTripId]);
 
+<<<<<<< HEAD
   // Real-time active trip document subscription
+=======
+  // 3. Real-time subscription to the active trip document
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
   useEffect(() => {
     if (!activeTripId) {
       setActiveTrip(null);
@@ -95,6 +119,10 @@ export function ActiveTripProvider({ children }) {
       activeTripId,
       (trip) => {
         setActiveTrip(trip);
+<<<<<<< HEAD
+=======
+        // If trip was cancelled or completed, clear if needed
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
         if (trip?.status === TRIP_STATUS.CANCELLED) {
           setActiveTripId(null);
         }
@@ -109,6 +137,10 @@ export function ActiveTripProvider({ children }) {
     };
   }, [activeTripId]);
 
+<<<<<<< HEAD
+=======
+  // 4. Accept trip handler
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
   const acceptTrip = useCallback(
     async (tripId) => {
       if (!driverId) return false;
@@ -131,6 +163,10 @@ export function ActiveTripProvider({ children }) {
     [driverId]
   );
 
+<<<<<<< HEAD
+=======
+  // 5. Reject trip handler
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
   const rejectTrip = useCallback(
     async (tripId) => {
       if (!driverId) return;
@@ -144,6 +180,10 @@ export function ActiveTripProvider({ children }) {
     [driverId]
   );
 
+<<<<<<< HEAD
+=======
+  // 6. Update active trip status (e.g. driver_arriving, in_progress)
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
   const changeTripStatus = useCallback(
     async (status, extraFields = {}) => {
       if (!activeTripId) return;
@@ -160,6 +200,10 @@ export function ActiveTripProvider({ children }) {
     [activeTripId]
   );
 
+<<<<<<< HEAD
+=======
+  // 7. Complete trip handler
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
   const completeTrip = useCallback(
     async ({ distanceKm, durationMin, tip = 0 }) => {
       if (!activeTripId || !activeTrip) return null;
@@ -184,6 +228,10 @@ export function ActiveTripProvider({ children }) {
     [activeTripId, activeTrip, vehicleInfo?.category]
   );
 
+<<<<<<< HEAD
+=======
+  // 8. Mark cash as paid
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
   const confirmCashPayment = useCallback(async () => {
     if (!activeTripId) return;
     setTripActionLoading(true);
@@ -197,6 +245,10 @@ export function ActiveTripProvider({ children }) {
     }
   }, [activeTripId]);
 
+<<<<<<< HEAD
+=======
+  // 9. Reset active trip (called after reviewing summary to go back to home)
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
   const clearActiveTrip = useCallback(() => {
     setActiveTrip(null);
     setActiveTripId(null);

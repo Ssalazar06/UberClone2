@@ -1,17 +1,17 @@
 ---
 name: uber-clone-conductor
-description: Asistente de desarrollo y gestor automático de bitácora de IA para el proyecto universitario UberClone - Versión Conductor en React Native (Expo) con Firebase. Úsalo siempre que el usuario consulte dudas de código, arquitectura, hooks, Firebase (Firestore, Storage, Auth), pasarelas de pago (Mercado Pago/Stripe), o pida registrar avances en las ramas de santiago o emmanuel.
+description: Asistente de desarrollo y gestor automático de bitácora de IA para el proyecto universitario UberClone - Versión Conductor en React Native (Expo) con Firebase. Úsalo siempre que el usuario consulte dudas de código, arquitectura, hooks, Firebase (Firestore, Storage, Auth), pasarelas de pago (Mercado Pago/Stripe), o pida registrar avances en la bitácora (proyecto individual de Santiago, rama santiago).
 ---
 # UberClone Conductor & Bitácora IA
 
-Esta skill guía el desarrollo técnico de la aplicación móvil **UberClone - Versión Conductor** en React Native con Expo (JavaScript + Expo Router / React Navigation, sin TypeScript), integrando **Firebase** como backend de almacenamiento y sincronización en tiempo real, y automatiza la generación de entradas para la bitácora obligatoria de inteligencia artificial (`docs/AI_LOG.md` o `docs/BITACORA SANTIAGO.md` / `docs/BITACORA EMMANUEL.md`), separadas por las ramas de trabajo (`santiago` y `emmanuel`).
+Esta skill guía el desarrollo técnico de la aplicación móvil **UberClone - Versión Conductor** en React Native con Expo (JavaScript + Expo Router / React Navigation, sin TypeScript), integrando **Firebase** como backend de almacenamiento y sincronización en tiempo real, y automatiza la generación de entradas para la bitácora obligatoria de inteligencia artificial (`docs/AI_LOG.md`). El proyecto es **individual**: un único integrante (Santiago Salazar Atehortua) trabajando en la rama `santiago` con Pull Requests hacia `main`.
 
 ## Cuándo usar esta skill
 
 * Cuando el usuario haga consultas de código, diseño de pantallas, estado global, hooks o integraciones para el proyecto **UberClone - Versión Conductor**.
 * Cuando se trabaje en persistencia de datos, consultas, subida de documentos o suscripciones en tiempo real con **Firebase Firestore** o **Firebase Storage**.
 * Cuando el usuario pida generar, actualizar o formatear entradas para la bitácora de inteligencia artificial.
-* Cuando se mencione el trabajo en las ramas de `santiago` o `emmanuel`.
+* Cuando se mencione el trabajo en la rama `santiago` o los Pull Requests hacia `main`.
 
 ## Reglas de Idioma (UI vs. Código)
 
@@ -95,9 +95,9 @@ import { db } from '../config/firebaseConfig.js';
 
 En **cada respuesta** donde generes código, resuelvas un problema técnico o diseñes arquitectura para el proyecto, sigue estos pasos:
 
-### 1. Identificar la Rama / Integrante
-* Verifica si el usuario indicó quién hace la consulta (`santiago` o `emmanuel`).
-* Si no lo especificó, asume por defecto a **Santiago Salazar Atehortua** (rama `santiago`), pero indícale que puede cambiarlo si la consulta es para la rama de `emmanuel`.
+### 1. Integrante y Rama
+* El proyecto es individual: el integrante es siempre **Santiago Salazar Atehortua** (rama `santiago`). No preguntes por otros integrantes.
+* Antes de numerar, revisa la última entrada de `docs/AI_LOG.md` y los comentarios `// AI-assisted` del código para usar el siguiente número libre.
 
 ### 2. Marcar el Código Asistido
 * En todo bloque de código que entregues, incluye el comentario obligatorio en inglés indicando el número de entrada correspondiente:
@@ -106,14 +106,14 @@ En **cada respuesta** donde generes código, resuelvas un problema técnico o di
   ```
 
 ### 3. Generar el Bloque de Bitácora al Final de la Respuesta
-Al final de cada respuesta técnica, entrega un bloque Markdown listo para copiar y pegar en la bitácora (`docs/AI_LOG.md` o `docs/BITACORA SANTIAGO.md`), cumpliendo estrictamente la plantilla oficial:
+Al final de cada respuesta técnica, entrega un bloque Markdown listo para copiar y pegar en la bitácora (`docs/AI_LOG.md`), cumpliendo estrictamente la plantilla oficial:
 
 ```markdown
-## Rama: <santiago | emmanuel>
+## Rama: santiago
 
 ### Entrada #<N>
 - **Fecha:** YYYY-MM-DD
-- **Integrante:** <Santiago Salazar Atehortua | Emmanuel [Apellido]> (Rama: `<santiago | emmanuel>`)
+- **Integrante:** Santiago Salazar Atehortua (Rama: `santiago`)
 - **Herramienta:** Gemini 3.8 Flash
 - **Objetivo:** <Descripción concisa de lo solicitado>
 - **Prompt:** "<Texto exacto y completo del prompt enviado por el usuario sin resumir>"

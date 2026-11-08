@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
 import { useContext } from 'react';
 import { ActiveTripContext } from '../context/ActiveTripContext.js';
 

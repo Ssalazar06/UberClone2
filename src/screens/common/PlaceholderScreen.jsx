@@ -1,16 +1,27 @@
+<<<<<<< HEAD
 // AI-assisted: see docs/AI_LOG.md #8
 
+=======
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, spacing, typography } from '../../theme/index.js';
 
+<<<<<<< HEAD
 export default function PlaceholderScreen({ title, subtitle }) {
+=======
+export default function PlaceholderScreen({ title, subtitle, icon }) {
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
       {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
       <View style={styles.badge}>
+<<<<<<< HEAD
         <Text style={styles.badgeText}>Fase 5 en desarrollo</Text>
+=======
+        <Text style={styles.badgeText}>Fase 2 / 5 en desarrollo</Text>
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
       </View>
     </View>
   );

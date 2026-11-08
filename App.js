@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 
+=======
+// AI-assisted: see docs/AI_LOG.md #8
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';

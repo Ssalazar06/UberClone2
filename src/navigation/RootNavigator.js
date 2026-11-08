@@ -19,7 +19,6 @@ export default function RootNavigator() {
   }
 
   // If approved in Firestore, show the full Main Drawer application.
-  // Otherwise (draft, pending_approval, rejected or empty), show Registration Navigator.
   if (registrationStatus === 'approved') {
     return <MainDrawerNavigator />;
   }

@@ -1,4 +1,3 @@
-
 import { PRICING_CONFIG } from '../config/pricing.js';
 
 /**
@@ -46,4 +45,7 @@ export const calculateFare = ({
     commissionRate,
   };
 };
+<<<<<<< HEAD
 
+=======
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170

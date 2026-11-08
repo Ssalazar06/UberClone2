@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   collection,
   deleteDoc,
@@ -15,15 +16,22 @@ import {
   where,
 } from 'firebase/firestore';
 
+=======
+import { collection, deleteDoc, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query,
+  runTransaction, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
 import { db } from '../config/firebaseConfig.js';
 import { TRIP_STATUS, PAYMENT_STATUS, PAYMENT_METHODS } from '../constants/tripStatus.js';
 import { calculateFare } from '../utils/calculateFare.js';
 
 const COLLECTION = 'trips';
 
+<<<<<<< HEAD
 /**
  * Creates a trip request (used by simulator or testing).
  */
+=======
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
 export const createTrip = async (tripId, tripData) => {
   const ref = doc(db, COLLECTION, tripId);
   await setDoc(ref, {
@@ -49,17 +57,29 @@ export const createTrip = async (tripId, tripData) => {
   return tripId;
 };
 
+<<<<<<< HEAD
 /**
  * Gets a trip by its ID.
  */
+=======
+/* Gets a trip by its ID. */
+
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
 export const getTrip = async (tripId) => {
   const snap = await getDoc(doc(db, COLLECTION, tripId));
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 };
 
+<<<<<<< HEAD
 /**
  * Real-time listener for incoming requested trips that match the driver's vehicle category.
  * Automatically filters out trips already rejected by this driver.
+=======
+/*
+ * Real-time listener for incoming requested trips that match the driver's vehicle category.
+ * Automatically filters out trips already rejected by this driver.
+ * Returns unsubscribe cleanup function for useEffect.
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
  */
 export const subscribeToRequestedTrips = (category, currentDriverId, onChange, onError) => {
   const q = query(
@@ -104,6 +124,11 @@ export const subscribeToActiveTrip = (tripId, onChange, onError) => {
 
 /**
  * Atomically accepts a trip using runTransaction.
+<<<<<<< HEAD
+=======
+ * Ensures that if two drivers try to accept the same trip simultaneously,
+ * or if the trip was cancelled/expired, only one succeeds.
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
  */
 export const acceptTrip = async (tripId, driverId) => {
   const tripRef = doc(db, COLLECTION, tripId);
@@ -132,7 +157,12 @@ export const acceptTrip = async (tripId, driverId) => {
 };
 
 /**
+<<<<<<< HEAD
  * Rejects a trip from the driver's perspective.
+=======
+ * Rejects a trip from the driver's perspective or when the 15s timer expires.
+ * Adds driverId to rejectedBy array so it won't appear again for this driver.
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
  */
 export const rejectTrip = async (tripId, driverId) => {
   const tripRef = doc(db, COLLECTION, tripId);
@@ -153,7 +183,11 @@ export const rejectTrip = async (tripId, driverId) => {
 };
 
 /**
+<<<<<<< HEAD
  * Updates a trip's lifecycle status.
+=======
+ * Updates a trip's lifecycle status (e.g. driver_arriving, in_progress).
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
  */
 export const updateTripStatus = async (tripId, status, extraFields = {}) => {
   const tripRef = doc(db, COLLECTION, tripId);
@@ -165,7 +199,12 @@ export const updateTripStatus = async (tripId, status, extraFields = {}) => {
 };
 
 /**
+<<<<<<< HEAD
  * Completes a trip and calculates the final fare.
+=======
+ * Completes a trip and calculates the final fare, platform commission,
+ * and driver earnings using calculateFare.
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
  */
 export const completeTrip = async (tripId, { distanceKm, durationMin, category, tip = 0 }) => {
   const { fare, commission, driverEarnings, commissionRate } = calculateFare({
@@ -219,7 +258,11 @@ export const getDriverTrips = async (driverId, maxTrips = 20) => {
 };
 
 /**
+<<<<<<< HEAD
  * Removes a trip by its ID.
+=======
+ * Removes a trip by its ID (useful for simulator cleanup).
+>>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
  */
 export const removeTrip = async (tripId) => {
   await deleteDoc(doc(db, COLLECTION, tripId));

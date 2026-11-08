@@ -1,4 +1,4 @@
-
+70
 import React from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import {
@@ -7,7 +7,6 @@ import {
   DrawerItemList,
 } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
-
 import HomeScreen from '../screens/home/HomeScreen.jsx';
 import PlaceholderScreen from '../screens/common/PlaceholderScreen.jsx';
 import useDriverRegistration from '../hooks/useDriverRegistration.js';
@@ -75,7 +74,6 @@ function CustomDrawerContent(props) {
     </View>
   );
 }
-
 function HistoryScreenWrapper() {
   return (
     <PlaceholderScreen
@@ -128,8 +126,8 @@ export default function MainDrawerNavigator() {
         name="Home"
         component={HomeScreen}
         options={{
-          title: 'Inicio',
-          drawerLabel: 'Inicio y mapa',
+          title: 'Inicioicio',
+          drawerLabel: 'Inicio',
           drawerIcon: ({ color, size }) => (
             <Ionicons name="map-outline" size={size} color={color} />
           ),

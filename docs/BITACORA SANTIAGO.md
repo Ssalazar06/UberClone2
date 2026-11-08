@@ -38,3 +38,27 @@ Porfavor tener en cuenta las listas desplegables para lso datos que se tienen en
 - **Archivos y commit:** `src/components/registration/ImagePickerField.jsx`, `src/context/DriverRegistrationContext.js` — `<pendiente_hash_commit>`
 - **Verificación:** Toma de fotografía de prueba en el componente y verificación de la URI generada en consola (`file://...`).
 - **Aprendizaje:** Las URIs con protocolo `file://` permiten a React Native desacoplar el almacenamiento de medios binarios pesados de la base de datos documental, garantizando funcionamiento fluido y sin costos de infraestructura en entornos de prueba y sustentación.
+
+### Entrada #8
+- **Fecha:** 2026-11-07
+- **Integrante:** Santiago Salazar Atehortua (Rama: `santiago`)
+- **Herramienta:** Gemini 3.8 Flash
+- **Objetivo:** Implementar la Fase 1 del modo conductor: función pura de cálculo de tarifas, constantes de estado de viajes, servicio de Firestore para viajes con transacciones atómicas, simulador de pasajeros en consola, contexto de viaje activo y arquitectura de navegación Root (Registro vs MainDrawer).
+- **Prompt:** "Si, empecemso porfa con la fase 1, recuerda seguir la misma estructura que llevamos y que sea parecido a lso ejemplso que tenemos en examples"
+- **Resumen de la respuesta:** Se estructuró el cálculo de tarifa en pesos colombianos cumpliendo la fórmula oficial y redondeo a 100 COP. Se creó `tripService.js` siguiendo el patrón modular de `ExamplesServicesBd.js` e incorporando `runTransaction` para aceptar solicitudes sin colisiones. Se implementó el script `scripts/simulatePassenger.mjs` para simular solicitudes, cancelaciones y pagos de pasajeros. Se construyeron `ActiveTripContext.js`, el hook `useActiveTrip.js`, el navegador de cajón `MainDrawerNavigator.js` y el selector `RootNavigator.js`.
+- **Qué se usó / modificó / descartó:** Se usó la sintaxis modular de Firebase vista en `docs/Examples/ExamplesServicesBd.js`, se adaptó el flujo con `runTransaction` y `onSnapshot` con limpieza de memoria para solicitudes en tiempo real, y se descartó delegar la simulación a la app móvil, centralizándola en un script de Node para no ensuciar la lógica del conductor.
+- **Archivos y commit:** `src/utils/calculateFare.js`, `src/constants/tripStatus.js`, `src/services/tripService.js`, `scripts/simulatePassenger.mjs`, `src/context/ActiveTripContext.js`, `src/hooks/useActiveTrip.js`, `src/navigation/MainDrawerNavigator.js`, `src/navigation/RootNavigator.js`, `App.js` — `<pendiente_hash_commit>`
+- **Verificación:** Ejecución de pruebas unitarias sobre `calculateFare.js` con Node.js comprobando los valores del documento (Económico 19.200 COP y XL 26.900 COP), y verificación del menú de ayuda del simulador `scripts/simulatePassenger.mjs`.
+- **Aprendizaje:** Emplear `runTransaction` en Firestore previene condiciones de carrera cuando múltiples conductores intentan aceptar la misma carrera o cuando el pasajero cancela en el mismo milisegundo. Desacoplar el simulador como un proceso externo permite probar la aplicación del conductor exactamente como funcionaría en producción.
+
+### Entrada #9
+- **Fecha:** 2026-11-07
+- **Integrante:** Santiago Salazar Atehortua (Rama: `santiago`)
+- **Herramienta:** Gemini 3.8 Flash
+- **Objetivo:** Implementar la Fase 2: seguimiento de geolocalización en tiempo real con hook personalizado (`useDriverLocation`), sincronización periódica en Firestore y pantalla interactiva de inicio (`HomeScreen`) con mapa y selector Disponible / No disponible.
+- **Prompt:** "Podemos continuar con la fase 2"
+- **Resumen de la respuesta:** Se implementó el hook `useDriverLocation.js` utilizando `Location.watchPositionAsync` con función de limpieza obligatoria para prevenir fugas de memoria al desconectarse. Se configuró sincronización periódica throttled (~5 segundos) con `drivers/{driverId}.currentLocation` en Firestore. Se creó `HomeScreen.jsx` con mapa de `react-native-maps`, marcador vehicular animado, tarjeta superior con interruptor de disponibilidad y badge inferior de solicitudes entrantes.
+- **Qué se usó / modificó / descartó:** Se utilizó la API de `expo-location` y `react-native-maps`, se conectó el estado de disponibilidad con `ActiveTripContext`, y se descartó la escritura continua en cada milisegundo del GPS para evitar sobrecostos y agotamiento de cuotas en Firestore.
+- **Archivos y commit:** `src/hooks/useDriverLocation.js`, `src/screens/home/HomeScreen.jsx`, `src/navigation/MainDrawerNavigator.js`, `docs/BITACORA SANTIAGO.md` — `<pendiente_hash_commit>`
+- **Verificación:** Verificación de la compilación de componentes de mapa, pruebas de activación/desactivación del watcher de posición y prueba de creación de solicitud con el simulador reflejada en Firestore.
+- **Aprendizaje:** El seguimiento GPS en aplicaciones móviles de transporte debe estar estrictamente acoplado al estado de disponibilidad mediante funciones de limpieza en `useEffect` y limitación de frecuencia de escritura a la base de datos para preservar la batería del dispositivo y el cupo de peticiones.

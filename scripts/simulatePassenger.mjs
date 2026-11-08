@@ -82,10 +82,7 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-<<<<<<< HEAD
-=======
 // Haversine distance in km
->>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
 function calculateDistance(loc1, loc2) {
   const R = 6371;
   const dLat = ((loc2.lat - loc1.lat) * Math.PI) / 180;
@@ -98,10 +95,7 @@ function calculateDistance(loc1, loc2) {
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const rawDist = R * c;
-<<<<<<< HEAD
-=======
   // Apply 1.3 road curvature factor
->>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
   return Math.round(rawDist * 1.3 * 10) / 10;
 }
 
@@ -238,17 +232,11 @@ async function seedHistory(flags) {
     const paymentMethod = getRandomItem(['cash', 'mercadopago']);
     const tip = Math.random() > 0.7 ? getRandomInt(1, 4) * 1000 : 0;
 
-<<<<<<< HEAD
-    const randDays = Math.random() < 0.4 ? 0 : Math.random() < 0.8 ? getRandomInt(1, 6) : getRandomInt(7, 25);
-    const tripDate = new Date(now - randDays * dayMs - getRandomInt(10, 400) * 60 * 1000);
-
-=======
     // Distribute dates: 40% today, 40% this week, 20% this month
     const randDays = Math.random() < 0.4 ? 0 : Math.random() < 0.8 ? getRandomInt(1, 6) : getRandomInt(7, 25);
     const tripDate = new Date(now - randDays * dayMs - getRandomInt(10, 400) * 60 * 1000);
 
     // Calculate approximate fare
->>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
     const mult = category === 'xl' ? 1.4 : category === 'premium' ? 1.8 : 1.0;
     const raw = (3500 + distanceKm * 1200 + durationMin * 250) * mult;
     const fare = Math.round(Math.max(raw, 6000) / 100) * 100;

@@ -9,10 +9,7 @@ export const TRIP_STATUS = {
   REJECTED: 'rejected',
 };
 
-<<<<<<< HEAD
 /** Spanish labels for display in UI */
-=======
->>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
 export const TRIP_STATUS_LABELS = {
   requested: 'Solicitado',
   accepted: 'Aceptado',

@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-
 import React, { createContext, useCallback, useEffect, useState } from 'react';
 
 import {
@@ -11,13 +9,11 @@ import {
   subscribeToRequestedTrips,
   updateTripStatus as updateTripStatusService,
 } from '../services/tripService.js';
-=======
 import React, { createContext, useCallback, useEffect, useState } from 'react';
 
 import { acceptTrip as acceptTripService, completeTrip as completeTripService, markCashPaid as markCashPaidService,
   rejectTrip as rejectTripService, subscribeToActiveTrip, subscribeToRequestedTrips,
   updateTripStatus as updateTripStatusService } from '../services/tripService.js';
->>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
 import { TRIP_STATUS } from '../constants/tripStatus.js';
 import useDriverRegistration from '../hooks/useDriverRegistration.js';
 import { getData, saveData } from '../services/localStorageService.js';

@@ -1,12 +1,13 @@
-// AI-assisted: see docs/AI_LOG.md #5
+// AI-assisted: see docs/AI_LOG.md #8
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { DriverRegistrationProvider } from './src/context/DriverRegistrationContext';
-import RegistrationNavigator from './src/navigation/RegistrationNavigator';
-import { colors } from './src/theme';
+import { DriverRegistrationProvider } from './src/context/DriverRegistrationContext.js';
+import { ActiveTripProvider } from './src/context/ActiveTripContext.js';
+import RootNavigator from './src/navigation/RootNavigator.js';
+import { colors } from './src/theme/index.js';
 
 const navigationTheme = {
   ...DefaultTheme,
@@ -24,10 +25,12 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <DriverRegistrationProvider>
-        <NavigationContainer theme={navigationTheme}>
-          <StatusBar style="dark" />
-          <RegistrationNavigator />
-        </NavigationContainer>
+        <ActiveTripProvider>
+          <NavigationContainer theme={navigationTheme}>
+            <StatusBar style="dark" />
+            <RootNavigator />
+          </NavigationContainer>
+        </ActiveTripProvider>
       </DriverRegistrationProvider>
     </SafeAreaProvider>
   );

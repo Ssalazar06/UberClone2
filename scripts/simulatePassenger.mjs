@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-// AI-assisted: see docs/AI_LOG.md #8
-
 /**
  * Passenger simulator for testing the Driver app without a Passenger app.
  * Can be run from terminal:
@@ -13,7 +9,6 @@
  *   node scripts/simulatePassenger.mjs seed --driver <driverId> --count 15
  *   node scripts/simulatePassenger.mjs clear
  */
->>>>>>> 7fb8422e2b1648e8b5d68ded008f2ce42ac86170
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import {

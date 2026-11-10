@@ -126,7 +126,7 @@ export default function MainDrawerNavigator() {
         name="Home"
         component={HomeScreen}
         options={{
-          title: 'Inicioicio',
+          title: 'Inicio',
           drawerLabel: 'Inicio',
           drawerIcon: ({ color, size }) => (
             <Ionicons name="map-outline" size={size} color={color} />

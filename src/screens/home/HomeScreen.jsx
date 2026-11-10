@@ -1,5 +1,3 @@
-// AI-assisted: see docs/AI_LOG.md #9
-
 import React, { useRef } from 'react';
 import {
   ActivityIndicator,

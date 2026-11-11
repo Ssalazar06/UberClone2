@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useEffect, useState } from 'react';
-import { acceptTrip as acceptTripService, completeTrip as completeTripService, markCashPaid as markCashPaidService,
+import { acceptTrip as acceptTripService, completeTrip as completeTripService,
+  getOngoingTripForDriver, markCashPaid as markCashPaidService,
   rejectTrip as rejectTripService, subscribeToActiveTrip, subscribeToRequestedTrips,
   updateTripStatus as updateTripStatusService } from '../services/tripService.js';
 import { TRIP_STATUS } from '../constants/tripStatus.js';
@@ -22,7 +23,7 @@ export function ActiveTripProvider({ children }) {
   const [tripActionLoading, setTripActionLoading] = useState(false);
   const [tripError, setTripError] = useState(null);
 
-  // 1. Restore availability preference when driver is approved
+  // 1. Restore availability preference and any ongoing trip when driver is approved
   useEffect(() => {
     let isMounted = true;
     (async () => {
@@ -34,11 +35,23 @@ export function ActiveTripProvider({ children }) {
       if (isMounted && typeof savedAvailability === 'boolean') {
         setIsAvailable(savedAvailability);
       }
+
+      if (driverId) {
+        try {
+          const ongoing = await getOngoingTripForDriver(driverId);
+          if (isMounted && ongoing) {
+            setActiveTripId(ongoing.id);
+            setActiveTrip(ongoing);
+          }
+        } catch (err) {
+          console.log('Error checking ongoing trip:', err);
+        }
+      }
     })();
     return () => {
       isMounted = false;
     };
-  }, [isApproved]);
+  }, [isApproved, driverId]);
 
   const setAvailability = useCallback(
     async (available) => {
@@ -87,8 +100,14 @@ export function ActiveTripProvider({ children }) {
       activeTripId,
       (trip) => {
         setActiveTrip(trip);
-        // If trip was cancelled or completed, clear if needed
+        // If trip was cancelled, notify and return to map
         if (trip?.status === TRIP_STATUS.CANCELLED) {
+          setTripError(
+            trip.cancelledBy === 'driver'
+              ? 'Has cancelado el viaje.'
+              : 'El pasajero canceló la solicitud.'
+          );
+          setActiveTrip(null);
           setActiveTripId(null);
         }
       },
@@ -158,7 +177,7 @@ export function ActiveTripProvider({ children }) {
 
   // 7. Complete trip handler
   const completeTrip = useCallback(
-    async ({ distanceKm, durationMin, tip = 0 }) => {
+    async ({ distanceKm, durationMin, tip = 0, routeCoordinates = [] }) => {
       if (!activeTripId || !activeTrip) return null;
       setTripActionLoading(true);
       try {
@@ -168,6 +187,7 @@ export function ActiveTripProvider({ children }) {
           durationMin: durationMin ?? activeTrip.durationMin,
           category,
           tip,
+          routeCoordinates,
         });
         return result;
       } catch (err) {

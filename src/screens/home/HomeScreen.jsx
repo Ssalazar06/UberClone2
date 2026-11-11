@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -7,22 +7,27 @@ import {
   Text,
   View,
 } from 'react-native';
-import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 
 import useActiveTrip from '../../hooks/useActiveTrip.js';
 import useDriverLocation from '../../hooks/useDriverLocation.js';
 import useDriverRegistration from '../../hooks/useDriverRegistration.js';
+import useTripRequests from '../../hooks/useTripRequests.js';
+import { createSimulatedTrip } from '../../services/tripService.js';
+import IncomingRequestCard from '../../components/trip/IncomingRequestCard.jsx';
+import {
+  SafeMapView,
+  SafeMarker,
+  PROVIDER_DEFAULT,
+} from '../../components/trip/SafeMapView.jsx';
 import { colors, radius, shadows, spacing, typography } from '../../theme/index.js';
 
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen() {
   const mapRef = useRef(null);
   const { registrationStatus, vehicleInfo } = useDriverRegistration();
   const {
     isAvailable,
     setAvailability,
-    incomingTrips,
-    activeTrip,
     tripError,
   } = useActiveTrip();
 
@@ -33,6 +38,58 @@ export default function HomeScreen({ navigation }) {
     errorMsg: locationError,
     isTracking,
   } = useDriverLocation(isAvailable);
+
+  const {
+    currentRequest,
+    secondsLeft,
+    totalSeconds,
+    isProcessing,
+    handleAccept,
+    handleReject,
+  } = useTripRequests();
+
+  const [simulating, setSimulating] = useState(false);
+
+  const handleSimulateRequest = async () => {
+    if (simulating) return;
+    setSimulating(true);
+    try {
+      await createSimulatedTrip({
+        category: vehicleInfo?.category || 'economy',
+        paymentMethod: 'cash',
+      });
+    } catch (err) {
+      console.log('Error creating simulated trip:', err);
+    } finally {
+      setSimulating(false);
+    }
+  };
+
+  // Fit map to show driver + incoming request pickup/destination markers
+  useEffect(() => {
+    if (!currentRequest || !mapRef.current) return;
+
+    const coords = [];
+    if (location) {
+      coords.push({ latitude: location.latitude, longitude: location.longitude });
+    }
+    if (currentRequest.origin) {
+      coords.push({ latitude: currentRequest.origin.lat, longitude: currentRequest.origin.lng });
+    }
+    if (currentRequest.destination) {
+      coords.push({
+        latitude: currentRequest.destination.lat,
+        longitude: currentRequest.destination.lng,
+      });
+    }
+
+    if (coords.length >= 2) {
+      mapRef.current.fitToCoordinates(coords, {
+        edgePadding: { top: 120, right: 50, bottom: 380, left: 50 },
+        animated: true,
+      });
+    }
+  }, [currentRequest?.id]);
 
   const handleToggleAvailability = (newValue) => {
     if (!isApproved) return;
@@ -56,7 +113,7 @@ export default function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
       {/* Interactive Map */}
-      <MapView
+      <SafeMapView
         ref={mapRef}
         style={styles.map}
         provider={PROVIDER_DEFAULT}
@@ -65,7 +122,7 @@ export default function HomeScreen({ navigation }) {
         showsCompass={false}
       >
         {location ? (
-          <Marker
+          <SafeMarker
             coordinate={{
               latitude: location.latitude,
               longitude: location.longitude,
@@ -94,9 +151,34 @@ export default function HomeScreen({ navigation }) {
                 <Ionicons name="car" size={20} color="#FFFFFF" />
               </View>
             </View>
-          </Marker>
+          </SafeMarker>
         ) : null}
-      </MapView>
+
+        {/* Incoming Request Origin & Destination Markers */}
+        {currentRequest?.origin ? (
+          <SafeMarker
+            coordinate={{
+              latitude: currentRequest.origin.lat,
+              longitude: currentRequest.origin.lng,
+            }}
+            title="Recogida"
+            description={currentRequest.origin.address}
+            pinColor={colors.success}
+          />
+        ) : null}
+
+        {currentRequest?.destination ? (
+          <SafeMarker
+            coordinate={{
+              latitude: currentRequest.destination.lat,
+              longitude: currentRequest.destination.lng,
+            }}
+            title="Destino"
+            description={currentRequest.destination.address}
+            pinColor={colors.error}
+          />
+        ) : null}
+      </SafeMapView>
 
       {/* Top Header Card: Availability Switcher */}
       <View style={styles.topCard}>
@@ -153,8 +235,8 @@ export default function HomeScreen({ navigation }) {
         ) : null}
       </View>
 
-      {/* Floating Center Location Button */}
-      {location ? (
+      {/* Floating Center Location Button (hidden while incoming request card is open) */}
+      {location && !currentRequest ? (
         <Pressable
           style={styles.centerButton}
           onPress={handleCenterUserLocation}
@@ -164,16 +246,34 @@ export default function HomeScreen({ navigation }) {
         </Pressable>
       ) : null}
 
-      {/* Bottom Floating Bar: Active Trip or Incoming Requests Counter */}
-      {incomingTrips.length > 0 && isAvailable ? (
-        <View style={styles.incomingBadge}>
-          <ActivityIndicator size="small" color="#FFFFFF" style={styles.badgeSpinner} />
-          <Text style={styles.incomingBadgeText}>
-            {incomingTrips.length === 1
-              ? '1 solicitud de viaje disponible'
-              : `${incomingTrips.length} solicitudes de viaje disponibles`}
-          </Text>
-        </View>
+      {/* Quick In-App Simulator Button (when available and waiting for requests) */}
+      {isAvailable && !currentRequest ? (
+        <Pressable
+          style={styles.simulateButton}
+          onPress={handleSimulateRequest}
+          disabled={simulating}
+        >
+          {simulating ? (
+            <ActivityIndicator size="small" color={colors.primaryText} />
+          ) : (
+            <>
+              <Ionicons name="flash" size={18} color={colors.primaryText} />
+              <Text style={styles.simulateButtonText}>Simular solicitud</Text>
+            </>
+          )}
+        </Pressable>
+      ) : null}
+
+      {/* Incoming Trip Request Card with 15s Countdown */}
+      {currentRequest ? (
+        <IncomingRequestCard
+          request={currentRequest}
+          secondsLeft={secondsLeft}
+          totalSeconds={totalSeconds}
+          isProcessing={isProcessing}
+          onAccept={handleAccept}
+          onReject={handleReject}
+        />
       ) : null}
     </View>
   );
@@ -233,7 +333,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.textMuted,
   },
   statusTitle: {
-    ...typography.h3,
+    ...typography.subtitle,
   },
   statusTitleOn: {
     color: colors.primary,
@@ -252,7 +352,7 @@ const styles = StyleSheet.create({
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.errorLight,
     padding: spacing.xs,
     borderRadius: radius.sm,
     marginTop: spacing.sm,
@@ -276,6 +376,24 @@ const styles = StyleSheet.create({
     ...shadows.md,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  simulateButton: {
+    position: 'absolute',
+    left: spacing.lg,
+    bottom: spacing.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 4,
+    borderRadius: radius.pill,
+    ...shadows.md,
+    gap: 6,
+  },
+  simulateButtonText: {
+    ...typography.label,
+    color: colors.primaryText,
+    fontWeight: '700',
   },
   carMarkerContainer: {
     alignItems: 'center',
@@ -310,27 +428,4 @@ const styles = StyleSheet.create({
   carUnavailable: {
     backgroundColor: colors.textSecondary,
   },
-  incomingBadge: {
-    position: 'absolute',
-    bottom: spacing.lg,
-    left: spacing.lg,
-    right: 80,
-    backgroundColor: colors.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.pill,
-    ...shadows.md,
-  },
-  badgeSpinner: {
-    marginRight: spacing.sm,
-  },
-  incomingBadgeText: {
-    ...typography.caption,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    flex: 1,
-  },
 });
-

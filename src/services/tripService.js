@@ -3,6 +3,7 @@ import { collection, deleteDoc, doc, getDoc, getDocs, limit, onSnapshot, orderBy
 import { db } from '../config/firebaseConfig.js';
 import { TRIP_STATUS, PAYMENT_STATUS, PAYMENT_METHODS } from '../constants/tripStatus.js';
 import { calculateFare } from '../utils/calculateFare.js';
+import { fetchDistanceMatrix } from '../utils/routeUtils.js';
 
 const COLLECTION = 'trips';
 
@@ -41,13 +42,12 @@ export const getTrip = async (tripId) => {
 
 /**
  * Real-time listener for incoming requested trips that match the driver's vehicle category.
- * Automatically filters out trips already rejected by this driver.
+ * Uses a single-field Firestore query to avoid composite index requirements and filters in memory.
  */
 export const subscribeToRequestedTrips = (category, currentDriverId, onChange, onError) => {
   const q = query(
     collection(db, COLLECTION),
-    where('status', '==', TRIP_STATUS.REQUESTED),
-    where('category', '==', category)
+    where('status', '==', TRIP_STATUS.REQUESTED)
   );
 
   return onSnapshot(
@@ -56,8 +56,14 @@ export const subscribeToRequestedTrips = (category, currentDriverId, onChange, o
       const trips = snapshot.docs
         .map((d) => ({ id: d.id, ...d.data() }))
         .filter((trip) => {
-          const rejected = trip.rejectedBy || [];
-          return !rejected.includes(currentDriverId);
+          const rejected = Array.isArray(trip.rejectedBy) ? trip.rejectedBy : [];
+          if (currentDriverId && rejected.includes(currentDriverId)) {
+            return false;
+          }
+          if (category && trip.category && trip.category !== category) {
+            return false;
+          }
+          return true;
         });
       onChange(trips);
     },
@@ -86,11 +92,12 @@ export const subscribeToActiveTrip = (tripId, onChange, onError) => {
 
 /**
  * Atomically accepts a trip using runTransaction.
+ * Also queries Google Distance Matrix API once upon acceptance to refresh distanceKm/durationMin.
  */
 export const acceptTrip = async (tripId, driverId) => {
   const tripRef = doc(db, COLLECTION, tripId);
 
-  return await runTransaction(db, async (transaction) => {
+  const acceptedTrip = await runTransaction(db, async (transaction) => {
     const snap = await transaction.get(tripRef);
 
     if (!snap.exists()) {
@@ -111,6 +118,26 @@ export const acceptTrip = async (tripId, driverId) => {
 
     return { id: snap.id, ...data, driverId, status: TRIP_STATUS.ACCEPTED };
   });
+
+  // Rule 5: Call Distance Matrix API once when accepting the trip
+  if (acceptedTrip?.origin && acceptedTrip?.destination) {
+    try {
+      const metrics = await fetchDistanceMatrix(acceptedTrip.origin, acceptedTrip.destination);
+      if (metrics?.distanceKm && metrics?.durationMin) {
+        await updateDoc(tripRef, {
+          distanceKm: metrics.distanceKm,
+          durationMin: metrics.durationMin,
+          updatedAt: serverTimestamp(),
+        });
+        acceptedTrip.distanceKm = metrics.distanceKm;
+        acceptedTrip.durationMin = metrics.durationMin;
+      }
+    } catch (err) {
+      console.log('Distance Matrix on accept skipped:', err);
+    }
+  }
+
+  return acceptedTrip;
 };
 
 /** 
@@ -149,13 +176,24 @@ export const updateTripStatus = async (tripId, status, extraFields = {}) => {
 /**
  * Completes a trip and calculates the final fare.
  */
-export const completeTrip = async (tripId, { distanceKm, durationMin, category, tip = 0 }) => {
+export const completeTrip = async (
+  tripId,
+  { distanceKm, durationMin, category, tip = 0, routeCoordinates = [] }
+) => {
   const { fare, commission, driverEarnings, commissionRate } = calculateFare({
     distanceKm,
     durationMin,
     category,
     tip,
   });
+
+  // Downsample polyline coordinates if needed to keep Firestore document compact
+  const maxPoints = 60;
+  let savedRoute = Array.isArray(routeCoordinates) ? routeCoordinates : [];
+  if (savedRoute.length > maxPoints) {
+    const step = Math.ceil(savedRoute.length / maxPoints);
+    savedRoute = savedRoute.filter((_, idx) => idx % step === 0 || idx === savedRoute.length - 1);
+  }
 
   const tripRef = doc(db, COLLECTION, tripId);
   await updateDoc(tripRef, {
@@ -165,11 +203,73 @@ export const completeTrip = async (tripId, { distanceKm, durationMin, category, 
     driverEarnings,
     commissionRate,
     tip,
+    ...(savedRoute.length > 0 ? { routeCoordinates: savedRoute } : {}),
     completedAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
 
   return { fare, commission, driverEarnings, commissionRate };
+};
+
+/**
+ * Finds an ongoing trip for a driver (useful to restore active trip state on app reload).
+ */
+export const getOngoingTripForDriver = async (driverId) => {
+  if (!driverId) return null;
+  const activeStatuses = [
+    TRIP_STATUS.ACCEPTED,
+    TRIP_STATUS.DRIVER_ARRIVING,
+    TRIP_STATUS.IN_PROGRESS,
+    TRIP_STATUS.COMPLETED,
+  ];
+  const q = query(
+    collection(db, COLLECTION),
+    where('driverId', '==', driverId)
+  );
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  const matchingDoc = snapshot.docs.find((d) => activeStatuses.includes(d.data()?.status));
+  return matchingDoc ? { id: matchingDoc.id, ...matchingDoc.data() } : null;
+};
+
+const DEMO_LOCATIONS = [
+  { name: 'Parque Berrío', lat: 6.2494, lng: -75.5686, address: 'Cra 50 # 50-2, Centro, Medellín' },
+  { name: 'Parque Lleras', lat: 6.2088, lng: -75.5678, address: 'Cra 37 # 8-12, El Poblado, Medellín' },
+  { name: 'Laureles Parque 1', lat: 6.2423, lng: -75.5925, address: 'Av Nutibara # 72-10, Laureles, Medellín' },
+  { name: 'CC Santafé', lat: 6.1969, lng: -75.5746, address: 'Cra 43A # 7 Sur-170, El Poblado, Medellín' },
+  { name: 'Estación Estadio', lat: 6.2536, lng: -75.5878, address: 'Cl 47D # 70-10, Estadio, Medellín' },
+];
+
+const DEMO_PASSENGERS = ['Laura Gómez', 'Carlos Restrepo', 'Mariana Henao', 'Andrés Villa'];
+
+/**
+ * Creates a simulated incoming trip in Firestore matching the driver's category.
+ * Uses Google Distance Matrix API (or Haversine fallback) once on creation.
+ */
+export const createSimulatedTrip = async ({ category = 'economy', paymentMethod = 'cash' } = {}) => {
+  const originIdx = Math.floor(Math.random() * DEMO_LOCATIONS.length);
+  const destIdx = (originIdx + 1 + Math.floor(Math.random() * (DEMO_LOCATIONS.length - 1))) % DEMO_LOCATIONS.length;
+  const origin = DEMO_LOCATIONS[originIdx];
+  const destination = DEMO_LOCATIONS[destIdx];
+  const passengerName = DEMO_PASSENGERS[Math.floor(Math.random() * DEMO_PASSENGERS.length)];
+  const tripId = `trip_${Date.now()}`;
+
+  // Rule 5: Call Distance Matrix API once when creating the request
+  const { distanceKm, durationMin } = await fetchDistanceMatrix(origin, destination);
+
+  await createTrip(tripId, {
+    passengerId: `sim_${Date.now()}`,
+    passengerName,
+    origin,
+    destination,
+    distanceKm,
+    durationMin,
+    category: category || 'economy',
+    paymentMethod,
+    tip: 1000,
+  });
+
+  return tripId;
 };
 
 /**

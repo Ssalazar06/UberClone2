@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import useDriverRegistration from '../../hooks/useDriverRegistration';
+import useKeyboardPadding from '../../hooks/useKeyboardPadding';
 import { VEHICLE_CATEGORY_OPTIONS, VEHICLE_COLOR_OPTIONS } from '../../data/registrationOptions';
 import { VEHICLE_INFO_FIELDS } from '../../data/registrationData';
 import FormInput from '../../components/registration/FormInput';
@@ -13,6 +14,7 @@ import { colors, radius, shadows, spacing, typography } from '../../theme';
 
 export default function VehicleInfoScreen({ navigation }) {
   const insets = useSafeAreaInsets();
+  const { bottomPadding } = useKeyboardPadding(spacing.xxl);
   const { vehicleInfo, vehicleInfoErrors, isVehicleInfoValid, touchedFields, updateVehicleInfo, touchField, touchFields } = useDriverRegistration();
 
   const getFieldError = (field) => (touchedFields[field] ? vehicleInfoErrors[field] : '');
@@ -42,12 +44,15 @@ export default function VehicleInfoScreen({ navigation }) {
   return (
     <KeyboardAvoidingView
       style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <ScrollView
         style={[styles.container, { paddingTop: insets.top }]}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}

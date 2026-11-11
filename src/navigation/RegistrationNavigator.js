@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
 import useDriverRegistration from '../hooks/useDriverRegistration';
+import useKeyboardPadding from '../hooks/useKeyboardPadding';
 import PersonalInfoScreen from '../screens/registration/PersonalInfoScreen';
 import VehicleInfoScreen from '../screens/registration/VehicleInfoScreen';
 import DocumentsInfoScreen from '../screens/registration/DocumentsInfoScreen';
@@ -44,9 +45,11 @@ export default function RegistrationNavigator() {
     savingAction,
     saveError,
     submitRegistration,
+    loginAsApprovedDemoDriver,
     registrationStatus,
     isLoadingSession,
   } = useDriverRegistration();
+  const { isKeyboardVisible } = useKeyboardPadding();
 
   if (isLoadingSession) {
     return (
@@ -81,6 +84,7 @@ export default function RegistrationNavigator() {
           ),
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.textMuted,
+          tabBarHideOnKeyboard: true,
           tabBarStyle: styles.tabBar,
           tabBarLabelStyle: styles.tabBarLabel,
         })}
@@ -111,75 +115,90 @@ export default function RegistrationNavigator() {
         />
       </Tab.Navigator>
 
-      {/* Footer "Enviar registro" */}
-      <View style={styles.footer}>
-        {registrationStatus === 'approved' ? (
-          <View style={styles.approvedStatusContainer}>
-            <Ionicons
-              name="checkmark-circle"
-              size={24}
-              color={colors.success}
-              style={styles.pendingIcon}
-            />
-            <View style={styles.pendingTextContainer}>
-              <Text style={styles.approvedTitle}>Estado: Aprobado</Text>
-              <Text style={styles.approvedSubtitle}>
-                Tu cuenta de conductor fue aprobada. Ya puedes conectarte como Disponible.
-              </Text>
-            </View>
-          </View>
-        ) : registrationStatus === 'pending_approval' ? (
-          <View style={styles.pendingStatusContainer}>
-            <Ionicons
-              name="time-outline"
-              size={24}
-              color="#92400E"
-              style={styles.pendingIcon}
-            />
-            <View style={styles.pendingTextContainer}>
-              <Text style={styles.pendingTitle}>Estado: Pendiente de aprobación</Text>
-              <Text style={styles.pendingSubtitle}>
-                Tu registro fue enviado y está siendo revisado. No podrás ponerte Disponible
-                hasta que tu estado cambie a Aprobado en la base de datos.
-              </Text>
-            </View>
-          </View>
-        ) : (
-          <View>
-            {saveError ? (
-              <Text style={styles.footerErrorText}>{saveError}</Text>
-            ) : null}
-
-            <Pressable
-              style={[
-                styles.submitButton,
-                (!isRegistrationValid || isSaving) && styles.submitButtonDisabled,
-              ]}
-              disabled={!isRegistrationValid || isSaving}
-              onPress={submitRegistration}
-            >
-              {savingAction === 'submit' ? (
-                <ActivityIndicator color={colors.primaryText} size="small" />
-              ) : (
-                <Text
-                  style={[
-                    styles.submitButtonText,
-                    !isRegistrationValid && styles.submitButtonTextDisabled,
-                  ]}
-                >
-                  Enviar registro
+      {/* Footer "Enviar registro" (hidden while keyboard is open so inputs have full scroll room) */}
+      {!isKeyboardVisible ? (
+        <View style={styles.footer}>
+          {registrationStatus === 'approved' ? (
+            <View style={styles.approvedStatusContainer}>
+              <Ionicons
+                name="checkmark-circle"
+                size={24}
+                color={colors.success}
+                style={styles.pendingIcon}
+              />
+              <View style={styles.pendingTextContainer}>
+                <Text style={styles.approvedTitle}>Estado: Aprobado</Text>
+                <Text style={styles.approvedSubtitle}>
+                  Tu cuenta de conductor fue aprobada. Ya puedes conectarte como Disponible.
                 </Text>
-              )}
-            </Pressable>
+              </View>
+            </View>
+          ) : registrationStatus === 'pending_approval' ? (
+            <View style={styles.pendingStatusContainer}>
+              <Ionicons
+                name="time-outline"
+                size={24}
+                color="#92400E"
+                style={styles.pendingIcon}
+              />
+              <View style={styles.pendingTextContainer}>
+                <Text style={styles.pendingTitle}>Estado: Pendiente de aprobación</Text>
+                <Text style={styles.pendingSubtitle}>
+                  Tu registro fue enviado y está siendo revisado. No podrás ponerte Disponible
+                  hasta que tu estado cambie a Aprobado en la base de datos.
+                </Text>
+              </View>
+            </View>
+          ) : (
+            <View>
+              {saveError ? (
+                <Text style={styles.footerErrorText}>{saveError}</Text>
+              ) : null}
 
-            {!isRegistrationValid ? (
-              <Text style={styles.disabledReason}>
-                Completa y valida las 3 pestañas para habilitar el envío
+              <Pressable
+                style={[
+                  styles.submitButton,
+                  (!isRegistrationValid || isSaving) && styles.submitButtonDisabled,
+                ]}
+                disabled={!isRegistrationValid || isSaving}
+                onPress={submitRegistration}
+              >
+                {savingAction === 'submit' ? (
+                  <ActivityIndicator color={colors.primaryText} size="small" />
+                ) : (
+                  <Text
+                    style={[
+                      styles.submitButtonText,
+                      !isRegistrationValid && styles.submitButtonTextDisabled,
+                    ]}
+                  >
+                    Enviar registro
+                  </Text>
+                )}
+              </Pressable>
+
+              {!isRegistrationValid ? (
+                <Text style={styles.disabledReason}>
+                  Completa y valida las 3 pestañas para habilitar el envío
+                </Text>
+              ) : null}
+            </View>
+          )}
+
+          {registrationStatus !== 'approved' ? (
+            <Pressable
+              style={styles.demoApproveButton}
+              onPress={loginAsApprovedDemoDriver}
+              disabled={isSaving}
+            >
+              <Ionicons name="flash-outline" size={16} color={colors.primaryDark} />
+              <Text style={styles.demoApproveButtonText}>
+                Modo Pruebas: Entrar como Conductor Aprobado
               </Text>
-            ) : null}
-          </View>
-        )}
-      </View>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -305,5 +324,23 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.success,
     marginTop: 2,
+  },
+  demoApproveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primarySoft,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    marginTop: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.borderFocus,
+    gap: 6,
+  },
+  demoApproveButtonText: {
+    ...typography.caption,
+    color: colors.primaryDark,
+    fontWeight: '700',
   },
 });

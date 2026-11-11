@@ -6,7 +6,7 @@ import {
   DrawerItemList,
 } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
-
+import TripStackNavigator from './TripStackNavigator.js';
 import PlaceholderScreen from '../screens/common/PlaceholderScreen.jsx';
 import useDriverRegistration from '../hooks/useDriverRegistration.js';
 import useActiveTrip from '../hooks/useActiveTrip.js';
@@ -15,7 +15,7 @@ import { colors, radius, spacing, typography } from '../theme/index.js';
 const Drawer = createDrawerNavigator();
 
 function CustomDrawerContent(props) {
-  const { personalInfo, vehicleInfo, clearSession } = useDriverRegistration();
+  const { personalInfo, vehicleInfo, resetRegistration } = useDriverRegistration();
   const { isAvailable } = useActiveTrip();
 
   return (
@@ -63,7 +63,7 @@ function CustomDrawerContent(props) {
         <Pressable
           style={styles.logoutButton}
           onPress={async () => {
-            if (clearSession) await clearSession();
+            if (resetRegistration) await resetRegistration();
           }}
         >
           <Ionicons name="log-out-outline" size={20} color={colors.error} />
@@ -73,16 +73,6 @@ function CustomDrawerContent(props) {
     </View>
   );
 }
-
-function HomeScreenWrapper() {
-  return (
-    <PlaceholderScreen
-      title="Inicio y Mapa"
-      subtitle="Aquí se integrará el mapa interactivo y el interruptor de Disponibilidad (Fase 2)."
-    />
-  );
-}
-
 function HistoryScreenWrapper() {
   return (
     <PlaceholderScreen
@@ -133,7 +123,7 @@ export default function MainDrawerNavigator() {
     >
       <Drawer.Screen
         name="Home"
-        component={HomeScreenWrapper}
+        component={TripStackNavigator}
         options={{
           title: 'Inicio',
           drawerLabel: 'Inicio',

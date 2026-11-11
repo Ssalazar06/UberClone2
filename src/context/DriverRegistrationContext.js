@@ -347,6 +347,62 @@ export function DriverRegistrationProvider({ children }) {
     setLastSavedAt(null);
   }, []);
 
+  // 12. Quick demo login / approval for testing Phase 2-5
+  const loginAsApprovedDemoDriver = useCallback(async () => {
+    setSavingAction('submit');
+    setSaveError('');
+    try {
+      const targetId = (personalInfo.documentId || '').trim() || '1000123456';
+      const demoDriver = {
+        id: targetId,
+        personalInfo: {
+          fullName: personalInfo.fullName || 'Santiago Salazar',
+          documentId: targetId,
+          phoneNumber: personalInfo.phoneNumber || '3001234567',
+          birthDate: personalInfo.birthDate || '1999-05-15',
+          gender: personalInfo.gender || 'male',
+          email: personalInfo.email || 'santiago@uberclone.com',
+          profilePhotoUri: personalInfo.profilePhotoUri || 'file:///demo/profile.jpg',
+        },
+        vehicleInfo: {
+          category: vehicleInfo.category || 'economy',
+          licensePlate: vehicleInfo.licensePlate || 'ABC123',
+          brand: vehicleInfo.brand || 'Chevrolet',
+          model: vehicleInfo.model || 'Onix',
+          year: Number(vehicleInfo.year) || 2023,
+          color: vehicleInfo.color || 'white',
+          passengerCapacity: Number(vehicleInfo.passengerCapacity) || 4,
+          vehiclePhotoUri: vehicleInfo.vehiclePhotoUri || 'file:///demo/vehicle.jpg',
+        },
+        documentsInfo: {
+          driverLicenseNumber: documentsInfo.driverLicenseNumber || targetId,
+          driverLicensePhotoUri: documentsInfo.driverLicensePhotoUri || 'file:///demo/license.jpg',
+          driverLicenseExpiryDate: documentsInfo.driverLicenseExpiryDate || '2028-12-31',
+          soatPhotoUri: documentsInfo.soatPhotoUri || 'file:///demo/soat.jpg',
+          soatExpiryDate: documentsInfo.soatExpiryDate || '2027-12-31',
+          mechanicalInspectionPhotoUri: documentsInfo.mechanicalInspectionPhotoUri || '',
+          mechanicalInspectionExpiryDate: documentsInfo.mechanicalInspectionExpiryDate || '',
+          mercadoPagoEmail: documentsInfo.mercadoPagoEmail || 'santiago.mp@correo.com',
+          termsAccepted: true,
+          acceptedCommissionRate: PLATFORM_COMMISSION_RATE,
+        },
+        status: REGISTRATION_STATUS.APPROVED,
+        isAvailable: false,
+      };
+
+      await saveDriver(targetId, demoDriver);
+      await saveData(STORAGE_KEYS.DRIVER_SESSION, { driverId: targetId });
+      applyDriver(demoDriver);
+      return { ok: true };
+    } catch (error) {
+      console.log('Error activating demo driver:', error);
+      setSaveError('No se pudo activar el conductor de prueba. Verifica tu conexión.');
+      return { ok: false };
+    } finally {
+      setSavingAction(null);
+    }
+  }, [personalInfo, vehicleInfo, documentsInfo, applyDriver]);
+
   const value = useMemo(
     () => ({
       // State
@@ -382,6 +438,7 @@ export function DriverRegistrationProvider({ children }) {
       saveDraft,
       submitRegistration,
       resetRegistration,
+      loginAsApprovedDemoDriver,
     }),
     [
       personalInfo,
@@ -412,6 +469,7 @@ export function DriverRegistrationProvider({ children }) {
       saveDraft,
       submitRegistration,
       resetRegistration,
+      loginAsApprovedDemoDriver,
     ]
   );
 

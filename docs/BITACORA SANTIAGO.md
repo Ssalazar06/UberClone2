@@ -38,3 +38,17 @@ Porfavor tener en cuenta las listas desplegables para lso datos que se tienen en
 - **Archivos y commit:** `src/components/registration/ImagePickerField.jsx`, `src/context/DriverRegistrationContext.js` — `<pendiente_hash_commit>`
 - **Verificación:** Toma de fotografía de prueba en el componente y verificación de la URI generada en consola (`file://...`).
 - **Aprendizaje:** Las URIs con protocolo `file://` permiten a React Native desacoplar el almacenamiento de medios binarios pesados de la base de datos documental, garantizando funcionamiento fluido y sin costos de infraestructura en entornos de prueba y sustentación.
+
+## Rama: santiago
+
+### Entrada #4
+- **Fecha:** 2026-11-10
+- **Integrante:** Santiago Salazar Atehortua (Rama: `santiago`)
+- **Herramienta:** Gemini 3.8 Flash
+- **Objetivo:** Integrar `@react-native-community/geolocation` (`watchPosition` y `clearWatch`) y las APIs actualizadas de Google Maps Platform (`Routes API` v2, `Geocoding API`, `Places API (New)`, `Maps SDK for Android` y `Maps JavaScript API`).
+- **Prompt:** "Necesito tu ayuda para integrar estas librerias y ser las que se usaran en el proyecto, pues la de mapas que esta usando no me funciona, las que integragramos en el en el proyecto seran: @react-native-community/geolocation, Routes API, Geocoding API, Places API (New), Maps SDK for Android y Maps JavaScrip API, "
+- **Resumen de la respuesta:** Se instaló y configuró `@react-native-community/geolocation` en `useDriverLocation.js` utilizando `watchPosition` y limpieza con `clearWatch` en `useEffect`, manteniendo respaldo en `expo-location` para Expo Go. Se implementó en `routeUtils.js` el consumo de **Google Routes API v2** (`POST https://routes.googleapis.com/directions/v2:computeRoutes` con cabeceras `X-Goog-Api-Key` y `X-Goog-FieldMask`), que unifica el cálculo de distancia/duración con tráfico (`routes.distanceMeters,routes.duration`) y el trazado de polilínea (`routes.polyline.encodedPolyline`), además de proteger `.env` en `.gitignore`.
+- **Qué se usó / modificó / descartó:** Se usó el endpoint moderno `directions/v2:computeRoutes` de `Routes API` en lugar de los endpoints heredados de `Directions` y `Distance Matrix`, se modificó `routeUtils.js` para enviar peticiones POST con `X-Goog-FieldMask` optimizado y se descartó versionar el archivo `.env` agregándolo a `.gitignore`.
+- **Archivos y commit:** `package.json`, `app.json`, `.gitignore`, `.env.example`, `src/config/appConfig.js`, `src/hooks/useDriverLocation.js`, `src/utils/routeUtils.js`, `src/services/tripService.js`, `src/components/trip/SafeMapView.jsx` — `<pendiente_hash_commit>`
+- **Verificación:** Configurar `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` en `.env`, reiniciar Expo con `npx expo start -c`, activar Disponible y simular una solicitud verificando que `Routes API` calcule `distanceKm`, `durationMin` y trace la ruta sobre el mapa de Google Maps.
+- **Aprendizaje:** Google `Routes API` (`computeRoutes` v2) reemplaza y unifica las antiguas `Directions API` y `Distance Matrix API`, exigiendo el encabezado `X-Goog-FieldMask` para solicitar únicamente los campos necesarios (`distanceMeters`, `duration` o `encodedPolyline`) y reducir la latencia y el costo por petición.

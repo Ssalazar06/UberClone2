@@ -1,5 +1,3 @@
-// AI-assisted: see docs/AI_LOG.md #8
-
 /**
  * Passenger simulator for testing the Driver app without a Passenger app.
  * Can be run from terminal:
@@ -277,6 +275,22 @@ async function clearTrips() {
   console.log(` Eliminados ${snap.size} viajes de prueba de la colección "trips".`);
 }
 
+async function listDrivers() {
+  const snap = await getDocs(collection(db, 'drivers'));
+  if (snap.empty) {
+    console.log(' No hay conductores registrados en la colección "drivers".');
+    return;
+  }
+  console.log(' Conductores en Firestore:');
+  for (const d of snap.docs) {
+    const data = d.data();
+    const name = data.personalInfo?.fullName || 'Sin nombre';
+    const category = data.vehicleInfo?.category || 'economy';
+    const plate = data.vehicleInfo?.licensePlate || 'Sin placa';
+    console.log(`   - ID: ${d.id} | Nombre: ${name} | Estado: ${data.status} | Categoría: ${category} | Placa: ${plate} | Disponible: ${Boolean(data.isAvailable)}`);
+  }
+}
+
 async function main() {
   const [,, command, ...rest] = process.argv;
   const flags = parseArgs(rest);
@@ -304,11 +318,15 @@ async function main() {
       case 'clear':
         await clearTrips();
         break;
+      case 'drivers':
+        await listDrivers();
+        break;
       default:
         console.log(`
 Uso del Simulador de Pasajeros (UberClone Conductor):
-  node scripts/simulatePassenger.mjs request [--category economy|xl|premium] [--payment cash|mercadopago]
+  node scripts/simulatePassenger.mjs drivers
   node scripts/simulatePassenger.mjs approve <driverId>
+  node scripts/simulatePassenger.mjs request [--category economy|xl|premium] [--payment cash|mercadopago] [--tip 2000]
   node scripts/simulatePassenger.mjs cancel <tripId>
   node scripts/simulatePassenger.mjs pay <tripId> [--status approved|rejected]
   node scripts/simulatePassenger.mjs rate <tripId> [1-5]
@@ -318,6 +336,8 @@ Uso del Simulador de Pasajeros (UberClone Conductor):
     }
   } catch (err) {
     console.error('Error ejecutando simulador:', err);
+  } finally {
+    process.exit(0);
   }
 }
 

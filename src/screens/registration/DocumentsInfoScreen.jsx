@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet,
@@ -7,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import useDriverRegistration from '../../hooks/useDriverRegistration';
+import useKeyboardPadding from '../../hooks/useKeyboardPadding';
 import { PLATFORM_COMMISSION_PERCENT } from '../../config/pricing';
 import { MECHANICAL_INSPECTION_MIN_VEHICLE_AGE } from '../../data/registrationOptions';
 import { DOCUMENTS_INFO_FIELDS } from '../../data/registrationData';
@@ -19,6 +21,7 @@ import { colors, radius, shadows, spacing, typography } from '../../theme';
 
 export default function DocumentsInfoScreen() {
   const insets = useSafeAreaInsets();
+  const { bottomPadding } = useKeyboardPadding(spacing.xxl);
   const { personalInfo, vehicleInfo, documentsInfo, documentsInfoErrors, isPersonalInfoValid, isVehicleInfoValid, isDocumentsInfoValid, requiresMechanicalInspection,
     touchedFields, updateDocumentsInfo, touchField, touchFields, canSaveDraft, savingAction, saveError, lastSavedAt, driverId,
     saveDraft, resetRegistration } = useDriverRegistration();
@@ -41,12 +44,15 @@ export default function DocumentsInfoScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <ScrollView
         style={[styles.container, { paddingTop: insets.top }]}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}

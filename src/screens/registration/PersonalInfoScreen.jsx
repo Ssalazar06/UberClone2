@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import useDriverRegistration from '../../hooks/useDriverRegistration';
+import useKeyboardPadding from '../../hooks/useKeyboardPadding';
 import { GENDER_OPTIONS, MIN_DRIVER_AGE } from '../../data/registrationOptions';
 import { PERSONAL_INFO_FIELDS } from '../../data/registrationData';
 import { subtractYears } from '../../utils/dateUtils';
@@ -15,6 +16,7 @@ import { colors, radius, shadows, spacing, typography } from '../../theme';
 
 export default function PersonalInfoScreen({ navigation }) {
   const insets = useSafeAreaInsets();
+  const { bottomPadding } = useKeyboardPadding(spacing.xxl);
   const { personalInfo, personalInfoErrors, isPersonalInfoValid, touchedFields, updatePersonalInfo, touchField, touchFields, } = useDriverRegistration();
 
   const getFieldError = (field) => (touchedFields[field] ? personalInfoErrors[field] : '');
@@ -39,12 +41,15 @@ export default function PersonalInfoScreen({ navigation }) {
   return (
     <KeyboardAvoidingView
       style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <ScrollView
         style={[styles.container, { paddingTop: insets.top }]}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}

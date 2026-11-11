@@ -7,9 +7,22 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "UberClone Conductor necesita tu ubicación en tiempo real para asignarte viajes cercanos y trazar la ruta."
+      }
     },
     "android": {
+      "softwareKeyboardLayoutMode": "resize",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": ""
+        }
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
@@ -21,7 +34,13 @@
     },
     "plugins": [
       "expo-status-bar",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "UberClone Conductor necesita tu ubicación para recibir y navegar viajes."
+        }
+      ]
     ]
   }
 }

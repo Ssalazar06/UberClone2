@@ -1,6 +1,6 @@
-// AI-assisted: see docs/AI_LOG.md #8
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -23,15 +23,17 @@ const navigationTheme = {
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <DriverRegistrationProvider>
-        <ActiveTripProvider>
-          <NavigationContainer theme={navigationTheme}>
-            <StatusBar style="dark" />
-            <RootNavigator />
-          </NavigationContainer>
-        </ActiveTripProvider>
-      </DriverRegistrationProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <DriverRegistrationProvider>
+          <ActiveTripProvider>
+            <NavigationContainer theme={navigationTheme}>
+              <StatusBar style="dark" />
+              <RootNavigator />
+            </NavigationContainer>
+          </ActiveTripProvider>
+        </DriverRegistrationProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

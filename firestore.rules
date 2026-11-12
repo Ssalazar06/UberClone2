@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /drivers/{driverId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.driverId == driverId
+        && request.resource.data.status in ['draft', 'pending_approval', 'approved', 'rejected'];
+      allow delete: if true;
+    }
+
+    match /trips/{tripId} {
+      allow read: if true;
+      allow create: if request.resource.data.status in ['requested', 'paid'];
+      allow update: if request.resource.data.status in [
+        'requested',
+        'accepted',
+        'driver_arriving',
+        'in_progress',
+        'completed',
+        'paid',
+        'cancelled',
+        'rejected'
+      ];
+      allow delete: if true;
+    }
+  }
+}
+

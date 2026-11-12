@@ -10,13 +10,14 @@ import TripStackNavigator from './TripStackNavigator.js';
 import PlaceholderScreen from '../screens/common/PlaceholderScreen.jsx';
 import useDriverRegistration from '../hooks/useDriverRegistration.js';
 import useActiveTrip from '../hooks/useActiveTrip.js';
+import { formatCOP } from '../utils/routeUtils.js';
 import { colors, radius, spacing, typography } from '../theme/index.js';
 
 const Drawer = createDrawerNavigator();
 
 function CustomDrawerContent(props) {
   const { personalInfo, vehicleInfo, resetRegistration } = useDriverRegistration();
-  const { isAvailable } = useActiveTrip();
+  const { isAvailable, driverBalance } = useActiveTrip();
 
   return (
     <View style={styles.drawerRoot}>
@@ -48,6 +49,18 @@ function CustomDrawerContent(props) {
             />
             <Text style={styles.statusChipText}>
               {isAvailable ? 'Disponible' : 'No disponible'}
+            </Text>
+          </View>
+          <View style={styles.balanceRow}>
+            <Ionicons name="wallet-outline" size={14} color={colors.textSecondary} />
+            <Text style={styles.balanceLabel}>Saldo:</Text>
+            <Text
+              style={[
+                styles.balanceValue,
+                driverBalance < 0 ? styles.balanceNegative : styles.balancePositive,
+              ]}
+            >
+              {formatCOP(driverBalance)}
             </Text>
           </View>
         </View>
@@ -234,6 +247,26 @@ const styles = StyleSheet.create({
     ...typography.caption,
     fontWeight: '600',
     color: colors.text,
+  },
+  balanceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.sm,
+    gap: 5,
+  },
+  balanceLabel: {
+    ...typography.caption,
+    color: colors.textSecondary,
+  },
+  balanceValue: {
+    ...typography.caption,
+    fontWeight: '700',
+  },
+  balancePositive: {
+    color: colors.primary,
+  },
+  balanceNegative: {
+    color: colors.error,
   },
   drawerItems: {
     flex: 1,

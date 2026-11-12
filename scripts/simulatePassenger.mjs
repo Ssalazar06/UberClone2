@@ -275,6 +275,38 @@ async function clearTrips() {
   console.log(` Eliminados ${snap.size} viajes de prueba de la colección "trips".`);
 }
 
+async function listTrips() {
+  const snap = await getDocs(collection(db, 'trips'));
+  if (snap.empty) {
+    console.log(' No hay viajes en la colección "trips".');
+    return;
+  }
+  console.log(' Viajes en Firestore:');
+  for (const d of snap.docs) {
+    const data = d.data();
+    console.log(
+      `   - ID: ${d.id} | Estado: ${data.status} | Pago: ${data.paymentMethod} (${data.paymentStatus}) | Conductor: ${data.driverId || 'ninguno'}`
+    );
+  }
+}
+
+async function cancelActiveTrips() {
+  const snap = await getDocs(collection(db, 'trips'));
+  let count = 0;
+  for (const d of snap.docs) {
+    const status = d.data()?.status;
+    if (!['paid', 'cancelled', 'rejected'].includes(status)) {
+      await updateDoc(d.ref, {
+        status: 'cancelled',
+        cancelledBy: 'simulator',
+        updatedAt: serverTimestamp(),
+      });
+      count += 1;
+    }
+  }
+  console.log(` Cancelados ${count} viajes activos/pendientes. La app volverá al mapa.`);
+}
+
 async function listDrivers() {
   const snap = await getDocs(collection(db, 'drivers'));
   if (snap.empty) {
@@ -318,6 +350,12 @@ async function main() {
       case 'clear':
         await clearTrips();
         break;
+      case 'trips':
+        await listTrips();
+        break;
+      case 'cancel-active':
+        await cancelActiveTrips();
+        break;
       case 'drivers':
         await listDrivers();
         break;
@@ -325,6 +363,8 @@ async function main() {
         console.log(`
 Uso del Simulador de Pasajeros (UberClone Conductor):
   node scripts/simulatePassenger.mjs drivers
+  node scripts/simulatePassenger.mjs trips
+  node scripts/simulatePassenger.mjs cancel-active
   node scripts/simulatePassenger.mjs approve <driverId>
   node scripts/simulatePassenger.mjs request [--category economy|xl|premium] [--payment cash|mercadopago] [--tip 2000]
   node scripts/simulatePassenger.mjs cancel <tripId>

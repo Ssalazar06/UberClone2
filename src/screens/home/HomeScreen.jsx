@@ -49,6 +49,7 @@ export default function HomeScreen() {
   } = useTripRequests();
 
   const [simulating, setSimulating] = useState(false);
+  const [simPaymentMethod, setSimPaymentMethod] = useState('cash');
 
   const handleSimulateRequest = async () => {
     if (simulating) return;
@@ -56,7 +57,7 @@ export default function HomeScreen() {
     try {
       await createSimulatedTrip({
         category: vehicleInfo?.category || 'economy',
-        paymentMethod: 'cash',
+        paymentMethod: simPaymentMethod,
       });
     } catch (err) {
       console.log('Error creating simulated trip:', err);
@@ -248,20 +249,38 @@ export default function HomeScreen() {
 
       {/* Quick In-App Simulator Button (when available and waiting for requests) */}
       {isAvailable && !currentRequest ? (
-        <Pressable
-          style={styles.simulateButton}
-          onPress={handleSimulateRequest}
-          disabled={simulating}
-        >
-          {simulating ? (
-            <ActivityIndicator size="small" color={colors.primaryText} />
-          ) : (
-            <>
-              <Ionicons name="flash" size={18} color={colors.primaryText} />
-              <Text style={styles.simulateButtonText}>Simular solicitud</Text>
-            </>
-          )}
-        </Pressable>
+        <View style={styles.simulateContainer}>
+          <Pressable
+            style={styles.paymentModePill}
+            onPress={() =>
+              setSimPaymentMethod((prev) => (prev === 'cash' ? 'mercadopago' : 'cash'))
+            }
+          >
+            <Ionicons
+              name={simPaymentMethod === 'cash' ? 'cash-outline' : 'card-outline'}
+              size={14}
+              color={colors.primaryDark}
+            />
+            <Text style={styles.paymentModeText}>
+              {simPaymentMethod === 'cash' ? 'Efectivo' : 'Mercado Pago'}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.simulateButton}
+            onPress={handleSimulateRequest}
+            disabled={simulating}
+          >
+            {simulating ? (
+              <ActivityIndicator size="small" color={colors.primaryText} />
+            ) : (
+              <>
+                <Ionicons name="flash" size={18} color={colors.primaryText} />
+                <Text style={styles.simulateButtonText}>Simular solicitud</Text>
+              </>
+            )}
+          </Pressable>
+        </View>
       ) : null}
 
       {/* Incoming Trip Request Card with 15s Countdown */}
@@ -377,10 +396,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  simulateButton: {
+  simulateContainer: {
     position: 'absolute',
     left: spacing.lg,
     bottom: spacing.xl,
+    gap: spacing.xs,
+    alignItems: 'flex-start',
+  },
+  paymentModePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 5,
+    ...shadows.sm,
+  },
+  paymentModeText: {
+    ...typography.caption,
+    color: colors.primaryDark,
+    fontWeight: '700',
+  },
+  simulateButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.primary,

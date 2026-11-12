@@ -1,9 +1,17 @@
-import React, { createContext, useCallback, useEffect, useState } from 'react';
+// AI-assisted: see docs/AI_LOG.md #5
+
+import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import { acceptTrip as acceptTripService, completeTrip as completeTripService,
   getOngoingTripForDriver, markCashPaid as markCashPaidService,
-  rejectTrip as rejectTripService, subscribeToActiveTrip, subscribeToRequestedTrips,
+  rejectTrip as rejectTripService, subscribeToActiveTrip, subscribeToDriverPaidTrips,
+  subscribeToRequestedTrips, switchTripPaymentMethod as switchTripPaymentMethodService,
   updateTripStatus as updateTripStatusService } from '../services/tripService.js';
-import { TRIP_STATUS } from '../constants/tripStatus.js';
+import {
+  checkTripPaymentStatus as checkTripPaymentStatusService,
+  createPaymentPreference as createPaymentPreferenceService,
+} from '../services/paymentService.js';
+import { calculateDriverBalance } from '../utils/calculateDriverBalance.js';
+import { PAYMENT_METHODS, TRIP_STATUS } from '../constants/tripStatus.js';
 import useDriverRegistration from '../hooks/useDriverRegistration.js';
 import { getData, saveData } from '../services/localStorageService.js';
 
@@ -20,8 +28,12 @@ export function ActiveTripProvider({ children }) {
   const [incomingTrips, setIncomingTrips] = useState([]);
   const [activeTrip, setActiveTrip] = useState(null);
   const [activeTripId, setActiveTripId] = useState(null);
+  const [paidTrips, setPaidTrips] = useState([]);
+  const [paymentPreference, setPaymentPreference] = useState(null);
   const [tripActionLoading, setTripActionLoading] = useState(false);
   const [tripError, setTripError] = useState(null);
+  const [paymentVerifying, setPaymentVerifying] = useState(false);
+  const [paymentCheckMessage, setPaymentCheckMessage] = useState(null);
 
   // 1. Restore availability preference and any ongoing trip when driver is approved
   useEffect(() => {
@@ -99,9 +111,15 @@ export function ActiveTripProvider({ children }) {
     const unsubscribe = subscribeToActiveTrip(
       activeTripId,
       (trip) => {
+        if (!trip) {
+          setActiveTrip(null);
+          setActiveTripId(null);
+          setPaymentPreference(null);
+          return;
+        }
         setActiveTrip(trip);
         // If trip was cancelled, notify and return to map
-        if (trip?.status === TRIP_STATUS.CANCELLED) {
+        if (trip.status === TRIP_STATUS.CANCELLED) {
           setTripError(
             trip.cancelledBy === 'driver'
               ? 'Has cancelado el viaje.'
@@ -109,6 +127,7 @@ export function ActiveTripProvider({ children }) {
           );
           setActiveTrip(null);
           setActiveTripId(null);
+          setPaymentPreference(null);
         }
       },
       (err) => {
@@ -121,7 +140,26 @@ export function ActiveTripProvider({ children }) {
     };
   }, [activeTripId]);
 
-  // 4. Accept trip handler
+  // 3b. Real-time subscription to driver's paid trips for live platform balance calculation
+  useEffect(() => {
+    if (!isApproved || !driverId) {
+      setPaidTrips([]);
+      return undefined;
+    }
+
+    const unsubscribe = subscribeToDriverPaidTrips(
+      driverId,
+      (trips) => setPaidTrips(trips),
+      (err) => console.log('Error subscribing to driver paid trips:', err)
+    );
+
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
+  }, [isApproved, driverId]);
+
+  const balanceBreakdown = useMemo(() => calculateDriverBalance(paidTrips), [paidTrips]);
+  const driverBalance = balanceBreakdown.balance;
   const acceptTrip = useCallback(
     async (tripId) => {
       if (!driverId) return false;
@@ -205,6 +243,7 @@ export function ActiveTripProvider({ children }) {
   const confirmCashPayment = useCallback(async () => {
     if (!activeTripId) return;
     setTripActionLoading(true);
+    setTripError(null);
     try {
       await markCashPaidService(activeTripId);
     } catch (err) {
@@ -215,11 +254,93 @@ export function ActiveTripProvider({ children }) {
     }
   }, [activeTripId]);
 
+  // 8b. Request Mercado Pago Checkout Pro preference from backend
+  const requestMercadoPagoPreference = useCallback(async () => {
+    if (!activeTripId || !activeTrip) return null;
+    setTripActionLoading(true);
+    setTripError(null);
+    try {
+      const amount = Math.round(Number(activeTrip.fare) || 0);
+      const preference = await createPaymentPreferenceService({
+        tripId: activeTripId,
+        amount,
+        description: `Viaje UberClone — ${activeTrip.origin?.name || 'Origen'} a ${
+          activeTrip.destination?.name || 'Destino'
+        }`,
+      });
+      setPaymentPreference(preference);
+      return preference;
+    } catch (err) {
+      console.log('Error creating payment preference:', err);
+      setTripError(
+        err.message ||
+          'No se pudo conectar con el servidor de pagos. Verifica que el backend esté activo.'
+      );
+      return null;
+    } finally {
+      setTripActionLoading(false);
+    }
+  }, [activeTripId, activeTrip]);
+
+  // 8d. Actively verify Mercado Pago payment status via backend (fallback for webhook delays)
+  const verifyMercadoPagoPayment = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!activeTripId) return null;
+      setPaymentVerifying(true);
+      if (!silent) setTripError(null);
+      try {
+        const result = await checkTripPaymentStatusService(activeTripId);
+        if (!result.found) {
+          setPaymentCheckMessage(
+            'Mercado Pago aún no registra ningún pago para este viaje. Completa el pago en Checkout Pro.'
+          );
+        } else if (result.paymentStatus === 'approved') {
+          setPaymentCheckMessage('¡Pago aprobado por Mercado Pago!');
+        } else if (result.paymentStatus === 'rejected') {
+          setPaymentCheckMessage(
+            `Mercado Pago rechazó el pago (${result.statusDetail || result.rawStatus}).`
+          );
+        } else {
+          setPaymentCheckMessage(
+            `Pago en estado "${result.rawStatus || 'pendiente'}". Vuelve a verificar en unos segundos.`
+          );
+        }
+        return result;
+      } catch (err) {
+        console.log('Error verifying payment status:', err);
+        if (!silent) {
+          setTripError(err.message || 'No se pudo verificar el estado del pago.');
+        }
+        return null;
+      } finally {
+        setPaymentVerifying(false);
+      }
+    },
+    [activeTripId]
+  );
+  // 8c. Switch payment method to cash (e.g., if card/Mercado Pago payment was rejected)
+  const switchToCashPayment = useCallback(async () => {
+    if (!activeTripId) return;
+    setTripActionLoading(true);
+    setTripError(null);
+    try {
+      await switchTripPaymentMethodService(activeTripId, PAYMENT_METHODS.CASH);
+      setPaymentPreference(null);
+    } catch (err) {
+      console.log('Error switching to cash payment:', err);
+      setTripError('Error al cambiar el método de pago a efectivo.');
+    } finally {
+      setTripActionLoading(false);
+    }
+  }, [activeTripId]);
+
   // 9. Reset active trip (called after reviewing summary to go back to home)
   const clearActiveTrip = useCallback(() => {
     setActiveTrip(null);
     setActiveTripId(null);
+    setPaymentPreference(null);
     setTripError(null);
+    setPaymentCheckMessage(null);
   }, []);
 
   const value = {
@@ -229,6 +350,10 @@ export function ActiveTripProvider({ children }) {
     incomingTrips,
     activeTrip,
     activeTripId,
+    paidTrips,
+    driverBalance,
+    balanceBreakdown,
+    paymentPreference,
     tripActionLoading,
     tripError,
     acceptTrip,
@@ -236,6 +361,11 @@ export function ActiveTripProvider({ children }) {
     changeTripStatus,
     completeTrip,
     confirmCashPayment,
+    requestMercadoPagoPreference,
+    verifyMercadoPagoPayment,
+    paymentVerifying,
+    paymentCheckMessage,
+    switchToCashPayment,
     clearActiveTrip,
   };
 

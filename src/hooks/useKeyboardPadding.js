@@ -1,13 +1,6 @@
-// AI-assisted: see docs/AI_LOG.md #12
-
 import { useEffect, useState } from 'react';
 import { Keyboard, Platform } from 'react-native';
 
-/**
- * Custom hook that listens to keyboard show/hide events (with mandatory cleanup)
- * and returns whether the keyboard is visible along with the extra bottom padding
- * required so any ScrollView can scroll all fields above the open keyboard.
- */
 export default function useKeyboardPadding(basePadding = 56) {
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 

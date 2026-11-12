@@ -6,11 +6,11 @@
 |---|---|
 | Registro en 3 Tabs + validaciones + `pending_approval` en Firestore | ✅ Hecho |
 | Sesión en AsyncStorage + escucha del `status` con `onSnapshot` | ✅ Hecho |
-| `src/config/pricing.js` | ✅ Hecho (falta `calculateFare`) |
+| `src/config/pricing.js` | ✅ Hecho (`calculateFare` listo) |
 | Inicio con mapa + interruptor Disponible / No disponible + GPS | ✅ Hecho |
 | Solicitud entrante con temporizador de 15 s | ✅ Hecho |
 | Viaje en curso (Stack: recogida → destino → finalizar) | ✅ Hecho |
-| Cobro (Mercado Pago de prueba + efectivo) y resumen | 🟡 Parcial (Efectivo + UI Resumen listos; falta backend MP Fase 4) |
+| Cobro (Mercado Pago de prueba + efectivo) y resumen | ✅ Hecho (Backend Express + Checkout Pro + Webhook + Saldo) |
 | Drawer: Perfil/Configuración, Historial, Ganancias | ❌ |
 | Hooks `useDriverLocation`, `useTripRequests`, `useEarnings` | 🟡 `useDriverLocation` y `useTripRequests` listos (falta `useEarnings`) |
 | Notificaciones de nuevas solicitudes | ❌ |

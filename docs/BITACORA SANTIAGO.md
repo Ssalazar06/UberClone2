@@ -46,9 +46,33 @@ Porfavor tener en cuenta las listas desplegables para lso datos que se tienen en
 - **Integrante:** Santiago Salazar Atehortua (Rama: `santiago`)
 - **Herramienta:** Gemini 3.8 Flash
 - **Objetivo:** Integrar `@react-native-community/geolocation` (`watchPosition` y `clearWatch`) y las APIs actualizadas de Google Maps Platform (`Routes API` v2, `Geocoding API`, `Places API (New)`, `Maps SDK for Android` y `Maps JavaScript API`).
-- **Prompt:** "Necesito tu ayuda para integrar estas librerias y ser las que se usaran en el proyecto, pues la de mapas que esta usando no me funciona, las que integragramos en el en el proyecto seran: @react-native-community/geolocation, Routes API, Geocoding API, Places API (New), Maps SDK for Android y Maps JavaScrip API, "
+- **Prompt:** "Necesito tu ayuda para integrar estas librerias y ser las que se usaran en el proyecto, pues la de mapas que esta usando no me funciona, las que integraremos en el en el proyecto seran: @react-native-community/geolocation, Routes API, Geocoding API, Places API (New), Maps SDK for Android y Maps JavaScrip API, "
 - **Resumen de la respuesta:** Se instaló y configuró `@react-native-community/geolocation` en `useDriverLocation.js` utilizando `watchPosition` y limpieza con `clearWatch` en `useEffect`, manteniendo respaldo en `expo-location` para Expo Go. Se implementó en `routeUtils.js` el consumo de **Google Routes API v2** (`POST https://routes.googleapis.com/directions/v2:computeRoutes` con cabeceras `X-Goog-Api-Key` y `X-Goog-FieldMask`), que unifica el cálculo de distancia/duración con tráfico (`routes.distanceMeters,routes.duration`) y el trazado de polilínea (`routes.polyline.encodedPolyline`), además de proteger `.env` en `.gitignore`.
 - **Qué se usó / modificó / descartó:** Se usó el endpoint moderno `directions/v2:computeRoutes` de `Routes API` en lugar de los endpoints heredados de `Directions` y `Distance Matrix`, se modificó `routeUtils.js` para enviar peticiones POST con `X-Goog-FieldMask` optimizado y se descartó versionar el archivo `.env` agregándolo a `.gitignore`.
 - **Archivos y commit:** `package.json`, `app.json`, `.gitignore`, `.env.example`, `src/config/appConfig.js`, `src/hooks/useDriverLocation.js`, `src/utils/routeUtils.js`, `src/services/tripService.js`, `src/components/trip/SafeMapView.jsx` — `<pendiente_hash_commit>`
 - **Verificación:** Configurar `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` en `.env`, reiniciar Expo con `npx expo start -c`, activar Disponible y simular una solicitud verificando que `Routes API` calcule `distanceKm`, `durationMin` y trace la ruta sobre el mapa de Google Maps.
 - **Aprendizaje:** Google `Routes API` (`computeRoutes` v2) reemplaza y unifica las antiguas `Directions API` y `Distance Matrix API`, exigiendo el encabezado `X-Goog-FieldMask` para solicitar únicamente los campos necesarios (`distanceMeters`, `duration` o `encodedPolyline`) y reducir la latencia y el costo por petición.
+
+### Entrada #5
+- **Fecha:** 2026-11-12
+- **Integrante:** Santiago Salazar Atehortua (Rama: `santiago`)
+- **Herramienta:** Gemini 3.8 Flash
+- **Objetivo:** Revisar la implementacion del backend en Node.js + Express para Mercado Pago Checkout Pro y webhooks, actualización en tiempo real de `TripSummaryScreen` y cálculo de saldo del conductor en plataforma.
+- **Prompt:** "Revisar la implementacion del backend realizado en Node.js + Express para Mercado Pago Checkout Pro y webhooks"
+- **Resumen de la respuesta:** Se reviso el backend en `/backend` con los endpoints `POST /payments/preference` (crea preferencia de Checkout Pro con `MP_ACCESS_TOKEN` en `.env` o modo sandbox local si no hay token) y `POST /payments/webhook` (actualiza `paymentStatus`, `paymentId` y `status: 'paid'` en Firestore). En la app se implementaron `paymentService.js`, la función pura `calculateDriverBalance.js` (`ganancias por pasarela - comisiones de viajes en efectivo`), suscripción en vivo a viajes pagados en `ActiveTripContext.js`, y la actualización de `TripSummaryScreen.jsx` y `MainDrawerNavigator.js` para mostrar estados (Aprobado, Pendiente, Rechazado, Efectivo), cobro con Checkout Pro y saldo actual.
+- **Qué se usó / modificó / descartó:** Se usó Express + Fetch nativo hacia la API REST de Mercado Pago y SDK modular de Firebase en `/backend`, se adaptaron `TripSummaryScreen.jsx`, `ActiveTripContext.js` y `MainDrawerNavigator.js`, y se descartó almacenar `MP_ACCESS_TOKEN` o llaves secretas de pasarela en la aplicación móvil o en `AsyncStorage`.
+- **Archivos y commit:** `backend/package.json`, `backend/.env.example`, `backend/src/server.js`, `backend/src/config/env.js`, `backend/src/config/firebase.js`, `backend/src/services/mercadoPagoService.js`, `backend/src/routes/paymentsRoutes.js`, `src/utils/calculateDriverBalance.js`, `src/services/paymentService.js`, `src/services/tripService.js`, `src/config/appConfig.js`, `src/context/ActiveTripContext.js`, `src/screens/trip/TripSummaryScreen.jsx`, `src/navigation/MainDrawerNavigator.js`, `src/screens/home/HomeScreen.jsx` — `<pendiente_hash_commit>`
+- **Verificación:** Prueba unitaria de `calculateDriverBalance` con saldo positivo y negativo, ejecución del backend (`npm --prefix backend start`) verificando `/health`, `/payments/preference` y `/payments/webhook`, y prueba en `TripSummaryScreen` en modo Efectivo y Mercado Pago.
+- **Aprendizaje:** Mantener el `MP_ACCESS_TOKEN` exclusivamente en el `.env` del servidor Express y sincronizar los webhooks contra Firestore permite que la app móvil reaccione en tiempo real vía `onSnapshot` sin exponer credenciales sensibles en el cliente.
+
+### Entrada #6
+- **Fecha:** 2026-11-12
+- **Integrante:** Santiago Salazar Atehortua (Rama: `santiago`)
+- **Herramienta:** Gemini
+- **Objetivo:** Configurar URL de webhook para Mercado Pago en ambiente de desarrollo
+- **Prompt:** "Que mas debo de hacer para configurar mi webhook"
+- **Resumen de la respuesta:** Se identificó que la URL de prueba estaba configurada como localhost. Se instruyó el uso de Ngrok para exponer el puerto 3001 a internet y proporcionar una URL pública válida a Mercado Pago.
+- **Qué se usó / modificó / descartó:** Se implementó Ngrok como herramienta de túnel reverso para recibir eventos locales; se descartó el uso directo de localhost.
+- **Archivos y commit:** N/A — <pendiente_hash_commit>
+- **Verificación:** Ejecutar Ngrok, actualizar la URL en Mercado Pago y verificar que al simular un estado en la app, la notificación llegue al backend local y se registre en la consola.
+- **Aprendizaje:** Los proveedores de webhooks externos requieren una URL pública accesible desde internet; no pueden resolver direcciones de red local como localhost.

@@ -287,6 +287,47 @@ export const markCashPaid = async (tripId) => {
 };
 
 /**
+ * Switches the payment method of a completed trip (e.g. fallback to cash if card was rejected).
+ */
+export const switchTripPaymentMethod = async (tripId, paymentMethod) => {
+  const tripRef = doc(db, COLLECTION, tripId);
+  await updateDoc(tripRef, {
+    paymentMethod,
+    paymentStatus: PAYMENT_STATUS.PENDING,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+/**
+ * Real-time listener for all paid trips of a driver to compute live platform balance.
+ * Uses a single-field query to avoid Firestore composite index requirements.
+ */
+export const subscribeToDriverPaidTrips = (driverId, onChange, onError) => {
+  if (!driverId) return () => {};
+
+  const q = query(
+    collection(db, COLLECTION),
+    where('driverId', '==', driverId)
+  );
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const paidTrips = snapshot.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .filter(
+          (t) => t.status === TRIP_STATUS.PAID || t.paymentStatus === PAYMENT_STATUS.APPROVED
+        );
+      onChange(paidTrips);
+    },
+    (error) => {
+      console.log('Error listening to driver paid trips:', error);
+      if (onError) onError(error);
+    }
+  );
+};
+
+/**
  * Retrieves past trips for a driver (history).
  */
 export const getDriverTrips = async (driverId, maxTrips = 20) => {

@@ -1,5 +1,3 @@
-// AI-assisted: see docs/AI_LOG.md #5
-
 import { PAYMENT_API_URL } from '../config/appConfig.js';
 
 /**

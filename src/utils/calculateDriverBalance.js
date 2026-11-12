@@ -1,5 +1,3 @@
-// AI-assisted: see docs/AI_LOG.md #5
-
 import { PAYMENT_METHODS, PAYMENT_STATUS, TRIP_STATUS } from '../constants/tripStatus.js';
 
 /**

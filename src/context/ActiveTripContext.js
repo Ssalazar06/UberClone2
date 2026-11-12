@@ -1,6 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #5
-
-import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { acceptTrip as acceptTripService, completeTrip as completeTripService,
   getOngoingTripForDriver, markCashPaid as markCashPaidService,
   rejectTrip as rejectTripService, subscribeToActiveTrip, subscribeToDriverPaidTrips,
@@ -14,6 +12,7 @@ import { calculateDriverBalance } from '../utils/calculateDriverBalance.js';
 import { PAYMENT_METHODS, TRIP_STATUS } from '../constants/tripStatus.js';
 import useDriverRegistration from '../hooks/useDriverRegistration.js';
 import { getData, saveData } from '../services/localStorageService.js';
+import { notifyIncomingTripRequest } from '../services/notificationService.js';
 
 export const ActiveTripContext = createContext(null);
 
@@ -34,6 +33,7 @@ export function ActiveTripProvider({ children }) {
   const [tripError, setTripError] = useState(null);
   const [paymentVerifying, setPaymentVerifying] = useState(false);
   const [paymentCheckMessage, setPaymentCheckMessage] = useState(null);
+  const lastNotifiedTripIdRef = useRef(null);
 
   // 1. Restore availability preference and any ongoing trip when driver is approved
   useEffect(() => {
@@ -90,6 +90,11 @@ export function ActiveTripProvider({ children }) {
       driverId,
       (trips) => {
         setIncomingTrips(trips);
+        const newest = trips?.[0];
+        if (newest?.id && lastNotifiedTripIdRef.current !== newest.id) {
+          lastNotifiedTripIdRef.current = newest.id;
+          notifyIncomingTripRequest(newest);
+        }
       },
       (err) => {
         console.log('Error listening to incoming trips:', err);

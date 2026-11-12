@@ -76,3 +76,16 @@ Porfavor tener en cuenta las listas desplegables para lso datos que se tienen en
 - **Archivos y commit:** N/A — <pendiente_hash_commit>
 - **Verificación:** Ejecutar Ngrok, actualizar la URL en Mercado Pago y verificar que al simular un estado en la app, la notificación llegue al backend local y se registre en la consola.
 - **Aprendizaje:** Los proveedores de webhooks externos requieren una URL pública accesible desde internet; no pueden resolver direcciones de red local como localhost.
+
+### Entrada #7
+- **Fecha:** 2026-11-12
+- **Integrante:** Santiago Salazar Atehortua (Rama: `santiago`)
+- **Herramienta:** Gemini
+- **Objetivo:** Revisar (`HistoryScreen` paginado con filtros, `TripDetailScreen` con polilínea, `useEarnings` + `EarningsScreen`, `ProfileScreen` editable), alertas locales de nuevas solicitudes, variables `EXPO_PUBLIC_FIREBASE_*`, reglas e índices de Firestore y `README.md`.
+- **Prompt:** "Puedes revisar lo ultimo que realice, que seria la pagina de historial, pagina de detalle perfil, notificaciones y reglas de firestore"
+- **Resumen de la respuesta:** Se implementaron `HistoryScreen.jsx` con `FlatList`, paginación con `limit(20)` + `startAfter`, filtros por período (Hoy, Semana, Mes, Rango) y método de pago; `TripDetailScreen.jsx` con mapa y ruta en `SafePolyline`, calificación y desglose financiero; `useEarnings.js` con `useMemo` y `EarningsScreen.jsx`; `ProfileScreen.jsx` reutilizando los componentes de registro y cierre de sesión; `notificationService.js` para alertar nuevas solicitudes desde el listener; variables `EXPO_PUBLIC_FIREBASE_*` en `firebaseConfig.js` y `.env.example`, `firestore.rules`, `firestore.indexes.json` y `README.md`.
+- **Qué se usó / modificó / descartó:** Se usó alerta por vibración + notificación local disparada desde el listener `onSnapshot` de `trips` porque FCM remoto con `@react-native-firebase/messaging` requiere *development build* nativo fuera de Expo Go; se incluyó respaldo automático en `getDriverTripsPage` si el índice compuesto `driverId + createdAt` aún se está construyendo en la consola de Firebase.
+- **Archivos y commit:** `src/services/tripService.js`, `src/hooks/useEarnings.js`, `src/screens/history/HistoryScreen.jsx`, `src/screens/history/TripDetailScreen.jsx`, `src/navigation/HistoryStackNavigator.js`, `src/screens/earnings/EarningsScreen.jsx`, `src/screens/profile/ProfileScreen.jsx`, `src/context/DriverRegistrationContext.js`, `src/navigation/MainDrawerNavigator.js`, `src/services/notificationService.js`, `src/context/ActiveTripContext.js`, `src/config/firebaseConfig.js`, `.env.example`, `firestore.rules`, `firestore.indexes.json`, `README.md` — `<pendiente_hash_commit>`
+- **Verificación:** Revisión de sintaxis con `@babel/parser` en todos los archivos nuevos y modificados, prueba de navegación en el Drawer (Historial, Detalle con ruta, Ganancias por hoy/semana/mes y edición de Perfil) y generación de viajes con `seed`.
+- **Aprendizaje:** Combinar consultas paginadas de Firestore (`orderBy('createdAt', 'desc')`, `limit(20)`, `startAfter`) con memorización en cliente (`useMemo` en `useEarnings`) permite mantener el historial escalable y recalcular métricas financieras por período sin lecturas adicionales a la base de datos.
+

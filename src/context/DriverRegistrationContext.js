@@ -192,13 +192,8 @@ export function DriverRegistrationProvider({ children }) {
       const newDriverId = personalInfo.documentId.trim();
       const payload = buildDriverPayload(personalInfo, vehicleInfo, documentsInfo);
 
-      // a) The document number is the driver id: it cannot belong to another registration
       const existingDriver = await getDriver(newDriverId);
-      if (
-        existingDriver &&
-        (existingDriver.id !== driverId ||
-          existingDriver.status !== REGISTRATION_STATUS.DRAFT)
-      ) {
+      if (existingDriver && existingDriver.id !== driverId) {
         return {
           ok: false,
           message: 'Ya existe un registro con este documento de identidad.',
@@ -334,6 +329,21 @@ export function DriverRegistrationProvider({ children }) {
     return runSave('submit', REGISTRATION_STATUS.PENDING_APPROVAL);
   }, [isRegistrationValid, runSave, touchFields]);
 
+  const updateApprovedProfile = useCallback(async () => {
+    touchFields([
+      ...PERSONAL_INFO_FIELDS,
+      ...VEHICLE_INFO_FIELDS,
+      ...DOCUMENTS_INFO_FIELDS,
+    ]);
+    if (!isRegistrationValid) {
+      return {
+        ok: false,
+        message: 'Revisa los campos marcados en rojo antes de guardar los cambios.',
+      };
+    }
+    return runSave('profile', registrationStatus || REGISTRATION_STATUS.APPROVED);
+  }, [isRegistrationValid, registrationStatus, runSave, touchFields]);
+
   // 11. Reset local session (Firestore document remains intact)
   const resetRegistration = useCallback(async () => {
     await removeData(STORAGE_KEYS.DRIVER_SESSION);
@@ -437,6 +447,7 @@ export function DriverRegistrationProvider({ children }) {
       touchFields,
       saveDraft,
       submitRegistration,
+      updateApprovedProfile,
       resetRegistration,
       loginAsApprovedDemoDriver,
     }),
@@ -468,6 +479,7 @@ export function DriverRegistrationProvider({ children }) {
       touchFields,
       saveDraft,
       submitRegistration,
+      updateApprovedProfile,
       resetRegistration,
       loginAsApprovedDemoDriver,
     ]

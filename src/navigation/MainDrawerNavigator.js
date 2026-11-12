@@ -7,7 +7,9 @@ import {
 } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
 import TripStackNavigator from './TripStackNavigator.js';
-import PlaceholderScreen from '../screens/common/PlaceholderScreen.jsx';
+import HistoryStackNavigator from './HistoryStackNavigator.js';
+import EarningsScreen from '../screens/earnings/EarningsScreen.jsx';
+import ProfileScreen from '../screens/profile/ProfileScreen.jsx';
 import useDriverRegistration from '../hooks/useDriverRegistration.js';
 import useActiveTrip from '../hooks/useActiveTrip.js';
 import { formatCOP } from '../utils/routeUtils.js';
@@ -86,33 +88,6 @@ function CustomDrawerContent(props) {
     </View>
   );
 }
-function HistoryScreenWrapper() {
-  return (
-    <PlaceholderScreen
-      title="Historial de Carreras"
-      subtitle="Lista de carreras realizadas con filtros por hoy, semana y mes (Fase 5)."
-    />
-  );
-}
-
-function EarningsScreenWrapper() {
-  return (
-    <PlaceholderScreen
-      title="Ganancias"
-      subtitle="Resumen de tarifas facturadas, comisiones descontadas y saldo neto (Fase 5)."
-    />
-  );
-}
-
-function ProfileScreenWrapper() {
-  return (
-    <PlaceholderScreen
-      title="Perfil y Configuración"
-      subtitle="Información personal, vehículo, documentos e idioma (Fase 5)."
-    />
-  );
-}
-
 export default function MainDrawerNavigator() {
   return (
     <Drawer.Navigator
@@ -147,7 +122,7 @@ export default function MainDrawerNavigator() {
       />
       <Drawer.Screen
         name="History"
-        component={HistoryScreenWrapper}
+        component={HistoryStackNavigator}
         options={{
           title: 'Historial',
           drawerLabel: 'Historial de carreras',
@@ -158,7 +133,7 @@ export default function MainDrawerNavigator() {
       />
       <Drawer.Screen
         name="Earnings"
-        component={EarningsScreenWrapper}
+        component={EarningsScreen}
         options={{
           title: 'Ganancias',
           drawerLabel: 'Ganancias',
@@ -169,7 +144,7 @@ export default function MainDrawerNavigator() {
       />
       <Drawer.Screen
         name="Profile"
-        component={ProfileScreenWrapper}
+        component={ProfileScreen}
         options={{
           title: 'Perfil',
           drawerLabel: 'Perfil y configuración',

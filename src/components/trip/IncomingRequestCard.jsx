@@ -14,11 +14,6 @@ import { PAYMENT_METHOD_LABELS } from '../../constants/tripStatus.js';
 import { getOptionLabel, VEHICLE_CATEGORY_OPTIONS } from '../../data/registrationOptions.js';
 import { colors, radius, shadows, spacing, typography } from '../../theme/index.js';
 
-/**
- * Floating bottom card displayed over the map when an incoming trip request arrives.
- * Shows passenger info, origin/destination, distance/duration, category, payment method,
- * estimated fare/earnings, and a 15-second countdown timer.
- */
 export default function IncomingRequestCard({
   request,
   secondsLeft,

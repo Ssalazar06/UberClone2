@@ -1,5 +1,3 @@
-// AI-assisted: see docs/AI_LOG.md #5
-
 import { NativeModules, Platform } from 'react-native';
 
 /**

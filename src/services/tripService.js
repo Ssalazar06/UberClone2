@@ -1,5 +1,5 @@
 import { collection, deleteDoc, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query,
-  runTransaction, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
+  runTransaction, serverTimestamp, setDoc, startAfter, Timestamp, updateDoc, where } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig.js';
 import { TRIP_STATUS, PAYMENT_STATUS, PAYMENT_METHODS } from '../constants/tripStatus.js';
 import { calculateFare } from '../utils/calculateFare.js';
@@ -327,23 +327,115 @@ export const subscribeToDriverPaidTrips = (driverId, onChange, onError) => {
   );
 };
 
-/**
- * Retrieves past trips for a driver (history).
- */
-export const getDriverTrips = async (driverId, maxTrips = 20) => {
-  const q = query(
-    collection(db, COLLECTION),
-    where('driverId', '==', driverId),
-    orderBy('createdAt', 'desc'),
-    limit(maxTrips)
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+const getTripMillis = (trip) => {
+  const raw = trip?.createdAt || trip?.completedAt || trip?.paidAt;
+  if (!raw) return 0;
+  if (typeof raw.toMillis === 'function') return raw.toMillis();
+  if (typeof raw.seconds === 'number') return raw.seconds * 1000;
+  const parsed = new Date(raw).getTime();
+  return Number.isNaN(parsed) ? 0 : parsed;
 };
 
-/**
- * Removes a trip by its ID.
- */
+export const getDriverTripsPage = async (driverId, { pageSize = 20, lastDoc = null, offset = 0 } = {}) => {
+  if (!driverId) return { trips: [], lastDoc: null, hasMore: false, nextOffset: 0 };
+
+  try {
+    const constraints = [
+      where('driverId', '==', driverId),
+      orderBy('createdAt', 'desc'),
+      ...(lastDoc ? [startAfter(lastDoc)] : []),
+      limit(pageSize),
+    ];
+    const snapshot = await getDocs(query(collection(db, COLLECTION), ...constraints));
+    const trips = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const nextCursor = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
+    return {
+      trips,
+      lastDoc: nextCursor,
+      hasMore: snapshot.docs.length === pageSize,
+      nextOffset: offset + trips.length,
+    };
+  } catch {
+    const fallbackSnap = await getDocs(
+      query(collection(db, COLLECTION), where('driverId', '==', driverId))
+    );
+    const allTrips = fallbackSnap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => getTripMillis(b) - getTripMillis(a));
+    const slice = allTrips.slice(offset, offset + pageSize);
+    return {
+      trips: slice,
+      lastDoc: null,
+      hasMore: offset + pageSize < allTrips.length,
+      nextOffset: offset + slice.length,
+    };
+  }
+};
+
+export const getDriverTrips = async (driverId, maxTrips = 20) => {
+  const { trips } = await getDriverTripsPage(driverId, { pageSize: maxTrips });
+  return trips;
+};
+
+export const seedDemoDriverTrips = async (driverId, count = 12) => {
+  if (!driverId) return 0;
+  const now = Date.now();
+  const dayMs = 24 * 60 * 60 * 1000;
+  const categories = ['economy', 'economy', 'xl', 'premium'];
+  const methods = [PAYMENT_METHODS.CASH, PAYMENT_METHODS.MERCADO_PAGO];
+
+  for (let i = 0; i < count; i++) {
+    const originIdx = i % DEMO_LOCATIONS.length;
+    const destIdx = (i + 2) % DEMO_LOCATIONS.length;
+    const origin = DEMO_LOCATIONS[originIdx];
+    const destination = DEMO_LOCATIONS[destIdx];
+    const distanceKm = Math.round((2.5 + (i % 7) * 1.4) * 10) / 10;
+    const durationMin = Math.max(8, Math.round((distanceKm / 25) * 60));
+    const category = categories[i % categories.length];
+    const paymentMethod = methods[i % methods.length];
+    const tip = i % 3 === 0 ? 2000 : 0;
+    const daysAgo = i < 4 ? 0 : i < 8 ? (i % 5) + 1 : (i % 18) + 7;
+    const tripDate = new Date(now - daysAgo * dayMs - (i + 1) * 35 * 60 * 1000);
+    const pricing = calculateFare({ distanceKm, durationMin, category, tip });
+    const tripId = `seed_${now}_${i}`;
+
+    const midLat = (origin.lat + destination.lat) / 2 + 0.0025;
+    const midLng = (origin.lng + destination.lng) / 2 - 0.002;
+
+    await setDoc(doc(db, COLLECTION, tripId), {
+      tripId,
+      driverId,
+      passengerId: `pass_seed_${i}`,
+      passengerName: DEMO_PASSENGERS[i % DEMO_PASSENGERS.length],
+      origin,
+      destination,
+      distanceKm,
+      durationMin,
+      category,
+      paymentMethod,
+      paymentStatus: PAYMENT_STATUS.APPROVED,
+      paymentId: `pay_seed_${now}_${i}`,
+      fare: pricing.fare,
+      commission: pricing.commission,
+      commissionRate: pricing.commissionRate,
+      tip,
+      driverEarnings: pricing.driverEarnings,
+      status: TRIP_STATUS.PAID,
+      rating: i % 4 === 0 ? 4 : 5,
+      routeCoordinates: [
+        { latitude: origin.lat, longitude: origin.lng },
+        { latitude: midLat, longitude: midLng },
+        { latitude: destination.lat, longitude: destination.lng },
+      ],
+      createdAt: Timestamp.fromDate(tripDate),
+      completedAt: Timestamp.fromDate(new Date(tripDate.getTime() + durationMin * 60 * 1000)),
+      paidAt: Timestamp.fromDate(new Date(tripDate.getTime() + (durationMin + 2) * 60 * 1000)),
+    });
+  }
+
+  return count;
+};
+
 export const removeTrip = async (tripId) => {
   await deleteDoc(doc(db, COLLECTION, tripId));
 };
